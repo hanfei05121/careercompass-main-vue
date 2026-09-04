@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { AUTH_ENABLED } from '@/lib/authConfig'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -130,8 +131,19 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
+
+  // 鉴权关闭：所有路由直接放行，不做登录态检查
+  if (!AUTH_ENABLED) {
+    // 根路径统一落到 /dashboard，避免停在空白的 Home 页
+    if (to.name === 'home') {
+      next({ name: 'dashboard' })
+      return
+    }
+    next()
+    return
+  }
 
   if (to.meta.public) {
     next()

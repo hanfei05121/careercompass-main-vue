@@ -32,6 +32,13 @@ const typeFilter = ref('')
 const searchQuery = ref('')
 
 onMounted(async () => {
+  // db 在未配置 Firebase 时为 null，直接跳过查询避免运行时报错
+  if (!db) {
+    console.warn('Firestore 未初始化，已跳过职位列表加载')
+    loading.value = false
+    return
+  }
+
   try {
     const q = query(
       collection(db, 'opportunities'),
@@ -58,37 +65,37 @@ const viewOpportunity = (id: string) => {
 <template>
   <div class="container mx-auto">
     <div class="mb-6">
-      <h1 class="text-3xl font-bold tracking-tight">Browse Opportunities</h1>
-      <p class="text-muted-foreground">Find your next great opportunity.</p>
+      <h1 class="text-3xl font-bold tracking-tight">浏览职位</h1>
+      <p class="text-muted-foreground">找到你的下一个好机会。</p>
     </div>
 
     <Card class="mb-6 rounded-3xl">
       <CardHeader>
         <CardTitle class="text-lg flex items-center gap-2">
           <SlidersHorizontal class="h-5 w-5" />
-          Filter Opportunities
+          筛选职位
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             v-model="searchQuery"
-            placeholder="Search opportunities..."
+            placeholder="搜索职位..."
           />
           <Input
             v-model="locationFilter"
-            placeholder="Filter by location..."
+            placeholder="按地点筛选..."
           />
           <Select v-model="typeFilter">
             <SelectTrigger>
-              <SelectValue placeholder="All Types" />
+              <SelectValue placeholder="全部类型" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Internship">Internship</SelectItem>
-              <SelectItem value="Volunteer">Volunteer</SelectItem>
-              <SelectItem value="Full-time">Full-time</SelectItem>
-              <SelectItem value="Part-time">Part-time</SelectItem>
-              <SelectItem value="Contract">Contract</SelectItem>
+              <SelectItem value="Internship">实习</SelectItem>
+              <SelectItem value="Volunteer">志愿</SelectItem>
+              <SelectItem value="Full-time">全职</SelectItem>
+              <SelectItem value="Part-time">兼职</SelectItem>
+              <SelectItem value="Contract">合同工</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -100,7 +107,7 @@ const viewOpportunity = (id: string) => {
     </div>
 
     <div v-else-if="opportunities.length === 0" class="text-center py-20 text-muted-foreground">
-      <p>No opportunities found.</p>
+      <p>暂无职位信息。</p>
     </div>
 
     <div v-else class="grid gap-4">
@@ -118,7 +125,7 @@ const viewOpportunity = (id: string) => {
               <div class="flex items-center gap-4 text-sm text-muted-foreground">
                 <span class="flex items-center gap-1">
                   <MapPin class="h-4 w-4" />
-                  {{ opp.location || 'Remote' }}
+                  {{ opp.location || '远程' }}
                 </span>
                 <Badge variant="secondary">{{ opp.type }}</Badge>
               </div>

@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore'
 import { db, auth as firebaseAuth } from '@/lib/firebase'
+import { AUTH_ENABLED } from '@/lib/authConfig'
 
 interface UserProfile {
   role: string
@@ -26,17 +27,47 @@ interface UserProfile {
   [key: string]: any
 }
 
-export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
-  const loading = ref(true)
-  const role = ref<string | null>(null)
-  const userProfile = ref<UserProfile | null>(null)
+/**
+ * 鉴权关闭时使用的虚拟用户。
+ * 只提供 UI 层会读取的字段，不触发任何网络请求。
+ */
+const GUEST_USER = {
+  uid: 'guest',
+  email: 'guest@careercompass.local',
+  displayName: 'Guest',
+  photoURL: null,
+  isAnonymous: true,
+} as unknown as User
 
-  const isAuthenticated = computed(() => !!user.value)
+const GUEST_PROFILE: UserProfile = {
+  role: 'employee',
+  plan: 'pro',
+  displayName: 'Guest',
+  email: 'guest@careercompass.local',
+  firstName: 'Guest',
+  lastName: '',
+}
+
+/** 鉴权关闭时 login/signup 返回的占位结果，模拟「用户文档不存在」 */
+const EMPTY_DOC_SNAP = { exists: () => false, data: () => undefined }
+
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<User | null>(AUTH_ENABLED ? null : GUEST_USER)
+  const loading = ref(AUTH_ENABLED)
+  const role = ref<string | null>(AUTH_ENABLED ? null : GUEST_PROFILE.role)
+  const userProfile = ref<UserProfile | null>(AUTH_ENABLED ? null : GUEST_PROFILE)
+
+  const isAuthenticated = computed(() => (AUTH_ENABLED ? !!user.value : true))
   const isAdmin = computed(() => role.value === 'admin')
   const isEmployer = computed(() => role.value === 'employer')
 
   const initAuth = () => {
+    // 鉴权关闭：保持内置的虚拟用户状态，不触碰 Firebase
+    if (!AUTH_ENABLED) {
+      loading.value = false
+      return
+    }
+
     if (!firebaseAuth || !db) {
       console.warn('Firebase is not initialized. Please configure your Firebase credentials.')
       loading.value = false
@@ -57,7 +88,7 @@ export const useAuthStore = defineStore('auth', () => {
           console.error('Failed to set session cookie:', e)
         }
 
-        const docRef = doc(db, 'users', firebaseUser.uid)
+        const docRef = doc(firestore, 'users', firebaseUser.uid)
         onSnapshot(docRef, (doc) => {
           if (doc.exists()) {
             const profileData = doc.data() as UserProfile
@@ -77,6 +108,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const login = async (email: string, password: string) => {
+    if (!AUTH_ENABLED) return EMPTY_DOC_SNAP
+
     if (!firebaseAuth || !db) {
       throw new Error('Firebase is not initialized. Please configure your Firebase credentials.')
     }
@@ -100,6 +133,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const loginWithGoogle = async () => {
+    if (!AUTH_ENABLED) return EMPTY_DOC_SNAP
+
     if (!firebaseAuth || !db) {
       throw new Error('Firebase is not initialized. Please configure your Firebase credentials.')
     }
@@ -147,6 +182,10 @@ export const useAuthStore = defineStore('auth', () => {
     password: string,
     selectedRole: 'employee' | 'employer'
   ) => {
+    if (!AUTH_ENABLED) {
+      return { uid: GUEST_USER.uid, ...GUEST_PROFILE, role: selectedRole }
+    }
+
     if (!firebaseAuth || !db) {
       throw new Error('Firebase is not initialized. Please configure your Firebase credentials.')
     }
@@ -182,6 +221,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = async () => {
+    // 鉴权关闭：没有真实的登录态可清除，直接视为已登出并保持虚拟用户
+    if (!AUTH_ENABLED) return
+
     if (!firebaseAuth) {
       throw new Error('Firebase is not initialized. Please configure your Firebase credentials.')
     }

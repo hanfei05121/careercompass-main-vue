@@ -24,9 +24,9 @@ const error = ref('')
 
 const signupSchema = toTypedSchema(
   z.object({
-    fullName: z.string().min(2, { message: 'Please enter your full name.' }),
-    email: z.string().email({ message: 'Please enter a valid email address.' }),
-    password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+    fullName: z.string().min(2, { message: '请输入你的姓名' }),
+    email: z.string().email({ message: '请输入有效的邮箱地址' }),
+    password: z.string().min(6, { message: '密码至少需要 6 个字符' }),
     role: z.enum(['employee', 'employer']).default('employee'),
   })
 )
@@ -56,21 +56,20 @@ const onSubmit = handleSubmit(async (formValues) => {
     )
 
     toast({
-      title: 'Account Created',
-      description: 'Your account has been successfully created. You are now logged in.',
+      title: '账号创建成功',
+      description: '你的账号已成功创建，现在已自动登录。',
     })
 
-    if (userData.role === 'admin') {
-      router.push('/admin')
-    } else if (userData.role === 'employer') {
+    // signup 只会创建 employee / employer，不存在 admin 分支
+    if (userData.role === 'employer') {
       router.push('/employer/dashboard')
     } else {
       router.push('/dashboard')
     }
   } catch (err: any) {
-    error.value = err.message || 'Something went wrong. Please try again.'
+    error.value = err.message || '出错了，请重试。'
     toast({
-      title: 'Signup Failed',
+      title: '注册失败',
       description: err.message,
       variant: 'destructive',
     })
@@ -88,19 +87,19 @@ const onSubmit = handleSubmit(async (formValues) => {
         <router-link to="/" class="flex items-center gap-2 text-lg font-semibold">
           <img
             src="https://i.postimg.cc/nLrDYrHW/icon.png"
-            alt="CareerCompass logo"
+            alt="职途指南 logo"
             class="w-8 h-8 bg-white/10 backdrop-blur-sm p-1 rounded-lg"
           />
-          <span>CareerCompass</span>
+          <span>职途指南</span>
         </router-link>
       </div>
 
       <div class="relative z-20 flex items-center gap-8 text-sm text-gray-600 dark:text-gray-700">
         <router-link to="/privacy-policy" class="hover:text-gray-900 dark:hover:text-black transition-colors">
-          Privacy Policy
+          隐私政策
         </router-link>
         <router-link to="/terms" class="hover:text-gray-900 dark:hover:text-black transition-colors">
-          Terms of Service
+          服务条款
         </router-link>
       </div>
     </div>
@@ -112,44 +111,44 @@ const onSubmit = handleSubmit(async (formValues) => {
         <div class="lg:hidden flex items-center justify-center gap-2 text-lg font-semibold mb-12">
           <img
             src="https://i.postimg.cc/nLrDYrHW/icon.png"
-            alt="CareerCompass logo"
+            alt="职途指南 logo"
             class="w-8 h-8 dark:bg-white dark:p-1 dark:rounded-md"
           />
-          <span>CareerCompass</span>
+          <span>职途指南</span>
         </div>
 
         <!-- Header -->
         <div class="text-center mb-10">
-          <h1 class="text-3xl font-bold tracking-tight mb-2">Create an account</h1>
-          <p class="text-muted-foreground text-sm">Join CareerCompass to find your next opportunity</p>
+          <h1 class="text-3xl font-bold tracking-tight mb-2">创建账号</h1>
+          <p class="text-muted-foreground text-sm">加入职途指南，寻找你的下一个机会</p>
         </div>
 
         <!-- Signup Form -->
         <form @submit="onSubmit" class="space-y-5">
           <div class="space-y-3">
-            <Label class="text-sm font-medium">I am a...</Label>
+            <Label class="text-sm font-medium">我的身份是...</Label>
             <RadioGroup
               :model-value="values.role"
-              @update:model-value="(val) => setFieldValue('role', val)"
+              @update:model-value="(val) => setFieldValue('role', val as 'employee' | 'employer')"
               class="flex gap-4"
             >
               <div class="flex items-center space-x-2 border rounded-xl px-4 py-3 flex-1 cursor-pointer hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5">
                 <RadioGroupItem value="employee" id="employee" class="sr-only" />
-                <Label for="employee" class="cursor-pointer flex-1 font-medium">Job Seeker</Label>
+                <Label for="employee" class="cursor-pointer flex-1 font-medium">求职者</Label>
               </div>
               <div class="flex items-center space-x-2 border rounded-xl px-4 py-3 flex-1 cursor-pointer hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5">
                 <RadioGroupItem value="employer" id="employer" class="sr-only" />
-                <Label for="employer" class="cursor-pointer flex-1 font-medium">Employer</Label>
+                <Label for="employer" class="cursor-pointer flex-1 font-medium">企业方</Label>
               </div>
             </RadioGroup>
           </div>
 
           <div class="space-y-2">
-            <Label for="fullName" class="text-sm font-medium">Full Name or Company Name</Label>
+            <Label for="fullName" class="text-sm font-medium">姓名或企业名称</Label>
             <Input
               id="fullName"
               type="text"
-              placeholder="John Doe or Acme Inc."
+              placeholder="例如：张三 或 某某科技"
               autocomplete="off"
               v-model="fullName"
               class="h-12 bg-background border-border/60 focus:border-primary"
@@ -158,11 +157,11 @@ const onSubmit = handleSubmit(async (formValues) => {
           </div>
 
           <div class="space-y-2">
-            <Label for="email" class="text-sm font-medium">Email</Label>
+            <Label for="email" class="text-sm font-medium">邮箱</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder="请输入邮箱地址"
               autocomplete="off"
               v-model="email"
               class="h-12 bg-background border-border/60 focus:border-primary"
@@ -171,7 +170,7 @@ const onSubmit = handleSubmit(async (formValues) => {
           </div>
 
           <div class="space-y-2">
-            <Label for="password" class="text-sm font-medium">Password</Label>
+            <Label for="password" class="text-sm font-medium">密码</Label>
             <div class="relative">
               <Input
                 id="password"
@@ -195,10 +194,10 @@ const onSubmit = handleSubmit(async (formValues) => {
           <div class="flex items-center space-x-2">
             <Checkbox id="privacy-terms" required />
             <Label for="privacy-terms" class="text-sm font-normal cursor-pointer">
-              I agree to the
-              <router-link to="/privacy-policy" class="text-primary underline mx-1">Privacy Policy</router-link>
-              and
-              <router-link to="/terms" class="text-primary underline mx-1">Terms of Service</router-link>
+              我已阅读并同意
+              <router-link to="/privacy-policy" class="text-primary underline mx-1">隐私政策</router-link>
+              与
+              <router-link to="/terms" class="text-primary underline mx-1">服务条款</router-link>
             </Label>
           </div>
 
@@ -207,14 +206,14 @@ const onSubmit = handleSubmit(async (formValues) => {
           </div>
 
           <Button type="submit" class="w-full h-12 text-base font-medium" :disabled="isLoading">
-            {{ isLoading ? 'Creating account...' : 'Create Account' }}
+            {{ isLoading ? '创建中...' : '创建账号' }}
           </Button>
         </form>
 
         <!-- Sign In Link -->
         <div class="text-center text-sm text-muted-foreground mt-8">
-          Already have an account?
-          <router-link to="/login" class="text-foreground font-medium hover:underline">Sign in</router-link>
+          已有账号？
+          <router-link to="/login" class="text-foreground font-medium hover:underline">返回登录</router-link>
         </div>
       </div>
     </div>
