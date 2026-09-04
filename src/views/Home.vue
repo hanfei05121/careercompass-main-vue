@@ -1,22 +1,23 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-onMounted(() => {
-  if (!authStore.loading) {
-    if (authStore.isAuthenticated) {
-      if (authStore.isEmployer) {
-        router.push('/employer/dashboard')
-      } else {
-        router.push('/dashboard')
-      }
+// 根据登录态做入口分流：已登录 → 平台内部（Dashboard），未登录 → 登录页。
+// 用 watchEffect 而非 onMounted，避免登录态初始化（loading）晚于本组件挂载时卡在加载页。
+watchEffect(() => {
+  if (authStore.loading) return
+  if (authStore.isAuthenticated) {
+    if (authStore.isEmployer) {
+      router.replace('/employer/dashboard')
     } else {
-      router.push('/login')
+      router.replace('/dashboard')
     }
+  } else {
+    router.replace('/login')
   }
 })
 </script>

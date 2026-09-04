@@ -130,7 +130,7 @@ const onSubmit = handleSubmit(async (formValues) => {
             <Label class="text-sm font-medium">I am a...</Label>
             <RadioGroup
               :model-value="values.role"
-              @update:model-value="(val) => setFieldValue('role', val)"
+              @update:model-value="(val) => setFieldValue('role', val as 'employee' | 'employer')"
               class="flex gap-4"
             >
               <div class="flex items-center space-x-2 border rounded-xl px-4 py-3 flex-1 cursor-pointer hover:bg-muted/50 transition-colors [&:has([data-state=checked])]:border-primary [&:has([data-state=checked])]:bg-primary/5">

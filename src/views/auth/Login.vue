@@ -44,28 +44,21 @@ const { handleSubmit, errors, defineField } = useForm({
 const [email] = defineField('email')
 const [password] = defineField('password')
 
-const navigateAfterLogin = (role?: string) => {
+const navigateAfterLogin = () => {
   const redirect = route.query.redirect as string
   if (redirect) {
     router.push(redirect)
     return
   }
-  if (role === 'admin') {
-    router.push('/admin')
-  } else if (role === 'employer') {
-    router.push('/employer/dashboard')
-  } else {
-    router.push('/dashboard')
-  }
+  router.push('/dashboard')
 }
 
 const onSubmit = handleSubmit(async (formValues) => {
   isLoading.value = true
   error.value = ''
   try {
-    const userDocSnap = await authStore.login(formValues.email, formValues.password)
-    const role = userDocSnap.exists() ? userDocSnap.data().role : undefined
-    navigateAfterLogin(role)
+    await authStore.login(formValues.email, formValues.password)
+    navigateAfterLogin()
   } catch (err: any) {
     error.value = err.message || 'Invalid email or password. Please try again.'
     toast({
@@ -77,20 +70,6 @@ const onSubmit = handleSubmit(async (formValues) => {
     isLoading.value = false
   }
 })
-
-const handleGoogleSignIn = async () => {
-  try {
-    const userDocSnap = await authStore.loginWithGoogle()
-    const role = userDocSnap.exists() ? userDocSnap.data().role : undefined
-    navigateAfterLogin(role)
-  } catch (err: any) {
-    toast({
-      title: 'Google Sign-In Failed',
-      description: err.message,
-      variant: 'destructive',
-    })
-  }
-}
 </script>
 
 <template>
@@ -212,22 +191,6 @@ const handleGoogleSignIn = async () => {
             :disabled="isLoading"
           />
         </form>
-
-        <!-- Social Login -->
-        <div class="mt-6">
-          <InteractiveHoverButton
-            type="button"
-            text="Log in with Google"
-            class="w-full h-12 border-border/60"
-            @click="handleGoogleSignIn"
-          >
-            <template #icon>
-              <svg class="h-5 w-5" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-                <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 76.2C322.3 113.2 289.4 96 248 96c-88.8 0-160.1 71.9-160.1 160.1s71.3 160.1 160.1 160.1c98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 26.9 3.9 41.4z"></path>
-              </svg>
-            </template>
-          </InteractiveHoverButton>
-        </div>
 
         <!-- Sign Up Link -->
         <div class="text-center text-sm text-muted-foreground mt-8">

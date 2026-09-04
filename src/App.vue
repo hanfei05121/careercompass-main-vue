@@ -1,14 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
 import Toaster from '@/components/ui/toast.vue'
-
-const authStore = useAuthStore()
-
-onMounted(() => {
-  authStore.initAuth()
-})
 </script>
 
 <template>

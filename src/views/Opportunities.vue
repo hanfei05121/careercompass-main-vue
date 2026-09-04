@@ -19,10 +19,68 @@ interface Opportunity {
   employerName: string
   location: string
   type: string
-  skills: string[] | string
+  skills?: string[] | string
   createdAt?: any
   [key: string]: any
 }
+
+// Firebase 未配置时展示的演示数据，保证登录后页面可正常浏览
+const DEMO_OPPORTUNITIES: Opportunity[] = [
+  {
+    id: 'demo-1',
+    title: 'Software Engineer Intern',
+    employerName: 'TechNova Labs',
+    location: 'Remote',
+    type: 'Internship',
+    skills: ['JavaScript', 'TypeScript', 'Vue'],
+    status: 'Active',
+  },
+  {
+    id: 'demo-2',
+    title: 'UX Design Volunteer',
+    employerName: 'Bright Future NGO',
+    location: 'New York',
+    type: 'Volunteer',
+    skills: ['Figma', 'Prototyping'],
+    status: 'Active',
+  },
+  {
+    id: 'demo-3',
+    title: 'Data Analyst',
+    employerName: 'FinData Solutions',
+    location: 'Remote',
+    type: 'Full-time',
+    skills: ['SQL', 'Python', 'Tableau'],
+    status: 'Active',
+  },
+  {
+    id: 'demo-4',
+    title: 'Community Outreach Coordinator',
+    employerName: 'CityServe',
+    location: 'Chicago',
+    type: 'Part-time',
+    skills: ['Communication', 'Event Planning'],
+    status: 'Active',
+  },
+  {
+    id: 'demo-5',
+    title: 'Frontend Developer (Contract)',
+    employerName: 'PixelForge',
+    location: 'Remote',
+    type: 'Contract',
+    skills: ['React', 'CSS', 'Node.js'],
+    status: 'Active',
+  },
+  {
+    id: 'demo-6',
+    title: 'Marketing Associate',
+    employerName: 'GreenLeaf Media',
+    location: 'Austin',
+    type: 'Full-time',
+    skills: ['SEO', 'Content', 'Analytics'],
+    status: 'Active',
+  },
+]
 
 const router = useRouter()
 const opportunities = ref<Opportunity[]>([])
@@ -32,9 +90,18 @@ const typeFilter = ref('')
 const searchQuery = ref('')
 
 onMounted(async () => {
+  // db 是模块级绑定，TS 不会在闭包内保留非空收窄，这里转存为 const
+  const firestore = db
+  if (!firestore) {
+    console.warn('Firebase not configured. Showing demo opportunities.')
+    opportunities.value = DEMO_OPPORTUNITIES
+    loading.value = false
+    return
+  }
+
   try {
     const q = query(
-      collection(db, 'opportunities'),
+      collection(firestore, 'opportunities'),
       where('status', '==', 'Active'),
       orderBy('createdAt', 'desc')
     )

@@ -52,12 +52,6 @@ const links = computed(() => {
   return employeeLinks
 })
 
-const dashboardHref = computed(() => {
-  if (authStore.isAdmin) return '/admin'
-  if (authStore.isEmployer) return '/employer/dashboard'
-  return '/dashboard'
-})
-
 const navigateTo = (href: string) => {
   router.push(href)
 }

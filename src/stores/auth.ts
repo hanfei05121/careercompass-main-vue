@@ -1,34 +1,36 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import {
-  onAuthStateChanged,
-  User,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  updateProfile,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from 'firebase/auth'
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore'
-import { db, auth as firebaseAuth } from '@/lib/firebase'
+
+/**
+ * 本地模拟认证 Store
+ *
+ * 项目当前未接入真实后端（Firebase 未配置），为了让平台可以完整跑通
+ * 「输入邮箱 + 密码 → 登录 → 进入平台内部首页」的流程，这里使用
+ * localStorage 保存登录态做本地模拟：
+ *  - 任意合法邮箱 + 至少 6 位密码即可登录（不做真实账号校验）
+ *  - 登录态写入 localStorage，刷新页面后仍然保持
+ *  - 后续接入真实后端时，只需替换 login / signup / logout 的实现
+ */
+
+const STORAGE_KEY = 'careercompass_user'
 
 interface UserProfile {
+  uid: string
+  email: string
   role: string
   plan?: string
-  skills?: string
   displayName?: string
-  email?: string
   firstName?: string
   lastName?: string
   companyName?: string
+  skills?: string
   photoURL?: string
   [key: string]: any
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
-  const loading = ref(true)
+  const user = ref<UserProfile | null>(null)
+  const loading = ref(false)
   const role = ref<string | null>(null)
   const userProfile = ref<UserProfile | null>(null)
 
@@ -36,160 +38,104 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => role.value === 'admin')
   const isEmployer = computed(() => role.value === 'employer')
 
+  const persist = (profile: UserProfile | null) => {
+    user.value = profile
+    userProfile.value = profile
+    role.value = profile?.role ?? null
+    if (profile) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(profile))
+      } catch (e) {
+        console.warn('Failed to persist session:', e)
+      }
+    } else {
+      try {
+        localStorage.removeItem(STORAGE_KEY)
+      } catch (e) {
+        console.warn('Failed to clear session:', e)
+      }
+    }
+  }
+
+  /** 应用启动时从 localStorage 恢复登录态 */
   const initAuth = () => {
-    if (!firebaseAuth || !db) {
-      console.warn('Firebase is not initialized. Please configure your Firebase credentials.')
-      loading.value = false
-      return
-    }
-
-    // db 是模块级 let 绑定，TS 不会在闭包内保留上面的非空收窄，
-    // 这里转存成 const 供 onAuthStateChanged 回调使用
-    const firestore = db
-
-    onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
-      user.value = firebaseUser
-      if (firebaseUser) {
-        try {
-          const token = await firebaseUser.getIdToken()
-          document.cookie = `__session=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax; Secure`
-        } catch (e) {
-          console.error('Failed to set session cookie:', e)
-        }
-
-        const docRef = doc(db, 'users', firebaseUser.uid)
-        onSnapshot(docRef, (doc) => {
-          if (doc.exists()) {
-            const profileData = doc.data() as UserProfile
-            profileData.plan = 'pro'
-            role.value = profileData.role
-            userProfile.value = profileData
-          }
-          loading.value = false
-        })
-      } else {
-        document.cookie = '__session=; path=/; max-age=0'
-        role.value = null
-        userProfile.value = null
-        loading.value = false
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (raw) {
+        persist(JSON.parse(raw) as UserProfile)
       }
-    })
+    } catch (e) {
+      console.warn('Failed to restore session:', e)
+      localStorage.removeItem(STORAGE_KEY)
+    }
+    loading.value = false
   }
 
-  const login = async (email: string, password: string) => {
-    if (!firebaseAuth || !db) {
-      throw new Error('Firebase is not initialized. Please configure your Firebase credentials.')
+  /**
+   * 登录：本地模拟实现。
+   * 任意格式合法的邮箱 + 不少于 6 位的密码即可登录，
+   * 登录成功后以「求职者（employee）」身份进入平台，默认着陆 /dashboard。
+   */
+  const login = async (email: string, password: string): Promise<UserProfile> => {
+    if (!password || password.length < 6) {
+      throw new Error('Password must be at least 6 characters.')
     }
 
-    const userCredential = await signInWithEmailAndPassword(firebaseAuth, email, password)
-    const firebaseUser = userCredential.user
-
-    const userDocRef = doc(db, 'users', firebaseUser.uid)
-    const userDocSnap = await getDoc(userDocRef)
-
-    if (userDocSnap.exists()) {
-      const userData = userDocSnap.data()
-      await setDoc(
-        doc(db, 'publicProfiles', firebaseUser.uid),
-        { uid: firebaseUser.uid, ...userData },
-        { merge: true }
-      )
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed || !trimmed.includes('@')) {
+      throw new Error('Please enter a valid email address.')
     }
 
-    return userDocSnap
+    const name = trimmed.split('@')[0] || 'User'
+    const profile: UserProfile = {
+      uid: `local-${Date.now()}`,
+      email: trimmed,
+      role: 'employee',
+      plan: 'pro',
+      displayName: name,
+      firstName: name.charAt(0).toUpperCase() + name.slice(1),
+      lastName: '',
+    }
+
+    persist(profile)
+    return profile
   }
 
-  const loginWithGoogle = async () => {
-    if (!firebaseAuth || !db) {
-      throw new Error('Firebase is not initialized. Please configure your Firebase credentials.')
-    }
-
-    const provider = new GoogleAuthProvider()
-    const result = await signInWithPopup(firebaseAuth, provider)
-    const firebaseUser = result.user
-
-    const userDocRef = doc(db, 'users', firebaseUser.uid)
-    const userDocSnap = await getDoc(userDocRef)
-
-    if (!userDocSnap.exists()) {
-      const emailDomain = firebaseUser.email?.split('@')[1]
-      const role = emailDomain === 'gmail.com' ? 'employee' : 'employer'
-
-      const nameParts = firebaseUser.displayName?.split(' ') || []
-      const firstName = nameParts[0] || ''
-      const lastName = nameParts.slice(1).join(' ') || ''
-
-      const userData = {
-        uid: firebaseUser.uid,
-        displayName: firebaseUser.displayName,
-        email: firebaseUser.email,
-        role: role,
-        photoURL: firebaseUser.photoURL,
-        firstName: firstName,
-        lastName: lastName,
-        ...(role === 'employer' && { companyName: firebaseUser.displayName }),
-      }
-
-      await setDoc(userDocRef, userData)
-      await setDoc(
-        doc(db, 'publicProfiles', firebaseUser.uid),
-        userData,
-        { merge: true }
-      )
-    }
-
-    return userDocSnap
-  }
-
+  /** 注册：本地模拟实现，注册成功后自动登录。 */
   const signup = async (
     fullName: string,
     email: string,
     password: string,
     selectedRole: 'employee' | 'employer'
-  ) => {
-    if (!firebaseAuth || !db) {
-      throw new Error('Firebase is not initialized. Please configure your Firebase credentials.')
+  ): Promise<UserProfile> => {
+    if (!password || password.length < 6) {
+      throw new Error('Password must be at least 6 characters.')
     }
 
-    const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password)
-    const firebaseUser = userCredential.user
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed || !trimmed.includes('@')) {
+      throw new Error('Please enter a valid email address.')
+    }
 
-    await updateProfile(firebaseUser, {
-      displayName: fullName,
-    })
-
-    const nameParts = fullName.split(' ')
-    const firstName = nameParts[0] || ''
-    const lastName = nameParts.slice(1).join(' ') || ''
-
-    const userData = {
-      uid: firebaseUser.uid,
-      displayName: fullName,
-      email: email,
+    const nameParts = fullName.trim().split(/\s+/)
+    const profile: UserProfile = {
+      uid: `local-${Date.now()}`,
+      email: trimmed,
       role: selectedRole,
-      firstName: firstName,
-      lastName: lastName,
-      ...(selectedRole === 'employer' && { companyName: fullName }),
+      plan: 'pro',
+      displayName: fullName.trim(),
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      ...(selectedRole === 'employer' && { companyName: fullName.trim() }),
     }
 
-    await setDoc(doc(db, 'users', firebaseUser.uid), userData)
-    await setDoc(
-      doc(db, 'publicProfiles', firebaseUser.uid),
-      userData
-    )
-
-    return userData
+    persist(profile)
+    return profile
   }
 
+  /** 退出登录：清除本地登录态 */
   const logout = async () => {
-    if (!firebaseAuth) {
-      throw new Error('Firebase is not initialized. Please configure your Firebase credentials.')
-    }
-
-    await signOut(firebaseAuth)
-    user.value = null
-    role.value = null
-    userProfile.value = null
+    persist(null)
   }
 
   return {
@@ -202,7 +148,6 @@ export const useAuthStore = defineStore('auth', () => {
     isEmployer,
     initAuth,
     login,
-    loginWithGoogle,
     signup,
     logout,
   }
