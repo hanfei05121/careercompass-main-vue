@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import {
-  getAuth,
   onAuthStateChanged,
   User,
   signInWithEmailAndPassword,
@@ -12,7 +11,7 @@ import {
   signInWithPopup,
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore'
-import { app, db, auth as firebaseAuth } from '@/lib/firebase'
+import { db, auth as firebaseAuth } from '@/lib/firebase'
 
 interface UserProfile {
   role: string
@@ -43,6 +42,10 @@ export const useAuthStore = defineStore('auth', () => {
       loading.value = false
       return
     }
+
+    // db 是模块级 let 绑定，TS 不会在闭包内保留上面的非空收窄，
+    // 这里转存成 const 供 onAuthStateChanged 回调使用
+    const firestore = db
 
     onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
       user.value = firebaseUser
