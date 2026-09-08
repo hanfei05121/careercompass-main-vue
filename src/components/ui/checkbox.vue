@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 import { Check } from 'lucide-vue-next'
 
 interface Props {

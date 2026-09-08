@@ -1,0 +1,21 @@
+/** 表单类公共样式 */
+.form-item-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/** 表单卡片容器 */
+.form-card {
+  padding: 24px;
+  border: 1px solid hsl(var(--border) / 0.6);
+  border-radius: calc(var(--radius) + 4px);
+  background-color: hsl(var(--card));
+}

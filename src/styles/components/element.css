@@ -1,0 +1,25 @@
+/** Element Plus 样式入口（按需组件样式由 unplugin 自动注入） */
+@import 'element-plus/theme-chalk/base.css';
+@import 'element-plus/theme-chalk/dark/css-vars.css';
+
+/** Element Plus 与项目色板打通：跟随 shadcn 变量 */
+:root {
+  --el-color-primary: hsl(240 5.9% 10%);
+  --el-color-success: hsl(142 71% 45%);
+  --el-color-warning: hsl(38 92% 50%);
+  --el-color-danger: hsl(var(--destructive));
+  --el-color-error: hsl(var(--destructive));
+  --el-border-radius-base: var(--radius);
+  --el-font-family:
+    'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+}
+
+.dark {
+  --el-color-primary: hsl(0 0% 98%);
+  --el-bg-color: hsl(var(--background));
+  --el-bg-color-overlay: hsl(var(--card));
+  --el-text-color-primary: hsl(var(--foreground));
+  --el-text-color-regular: hsl(var(--muted-foreground));
+  --el-border-color: hsl(var(--border));
+  --el-fill-color-blank: hsl(var(--background));
+}

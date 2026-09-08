@@ -25,8 +25,8 @@ const isTyping = ref(false)
 
 const loginSchema = toTypedSchema(
   z.object({
-    email: z.string().email({ message: 'Please enter a valid email address.' }),
-    password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+    email: z.string().email({ message: '请输入有效的邮箱地址' }),
+    password: z.string().min(6, { message: '密码至少需要 6 个字符' }),
   })
 )
 
@@ -60,9 +60,9 @@ const onSubmit = handleSubmit(async (formValues) => {
     await authStore.login(formValues.email, formValues.password)
     navigateAfterLogin()
   } catch (err: any) {
-    error.value = err.message || 'Invalid email or password. Please try again.'
+    error.value = err.message || '邮箱或密码错误，请重试。'
     toast({
-      title: 'Login Failed',
+      title: '登录失败',
       description: err.message,
       variant: 'destructive',
     })
@@ -70,6 +70,19 @@ const onSubmit = handleSubmit(async (formValues) => {
     isLoading.value = false
   }
 })
+
+const handleGoogleSignIn = async () => {
+  try {
+    await authStore.loginWithGoogle()
+    navigateAfterLogin()
+  } catch (err: any) {
+    toast({
+      title: 'Google 登录失败',
+      description: err.message,
+      variant: 'destructive',
+    })
+  }
+}
 </script>
 
 <template>
@@ -80,10 +93,10 @@ const onSubmit = handleSubmit(async (formValues) => {
         <router-link to="/" class="flex items-center gap-2 text-lg font-semibold">
           <img
             src="https://i.postimg.cc/nLrDYrHW/icon.png"
-            alt="CareerCompass logo"
+            alt="职途指南 logo"
             class="w-8 h-8 bg-white/10 backdrop-blur-sm p-1 rounded-lg"
           />
-          <span>CareerCompass</span>
+          <span>职途指南</span>
         </router-link>
       </div>
 
@@ -97,10 +110,10 @@ const onSubmit = handleSubmit(async (formValues) => {
 
       <div class="relative z-20 flex items-center gap-8 text-sm text-gray-600 dark:text-gray-700">
         <router-link to="/privacy-policy" class="hover:text-gray-900 dark:hover:text-black transition-colors">
-          Privacy Policy
+          隐私政策
         </router-link>
         <router-link to="/terms" class="hover:text-gray-900 dark:hover:text-black transition-colors">
-          Terms of Service
+          服务条款
         </router-link>
       </div>
 
@@ -117,26 +130,26 @@ const onSubmit = handleSubmit(async (formValues) => {
         <div class="lg:hidden flex items-center justify-center gap-2 text-lg font-semibold mb-12">
           <img
             src="https://i.postimg.cc/nLrDYrHW/icon.png"
-            alt="CareerCompass logo"
+            alt="职途指南 logo"
             class="w-8 h-8 dark:bg-white dark:p-1 dark:rounded-md"
           />
-          <span>CareerCompass</span>
+          <span>职途指南</span>
         </div>
 
         <!-- Header -->
         <div class="text-center mb-10">
-          <h1 class="text-3xl font-bold tracking-tight mb-2">Welcome back!</h1>
-          <p class="text-muted-foreground text-sm">Please enter your details</p>
+          <h1 class="text-3xl font-bold tracking-tight mb-2">欢迎回来！</h1>
+          <p class="text-muted-foreground text-sm">请输入你的登录信息</p>
         </div>
 
         <!-- Login Form -->
         <form @submit="onSubmit" class="space-y-5">
           <div class="space-y-2">
-            <Label for="email" class="text-sm font-medium">Email</Label>
+            <Label for="email" class="text-sm font-medium">邮箱</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder="请输入邮箱地址"
               autocomplete="off"
               v-model="email"
               class="h-12 bg-background border-border/60 focus:border-primary"
@@ -147,7 +160,7 @@ const onSubmit = handleSubmit(async (formValues) => {
           </div>
 
           <div class="space-y-2">
-            <Label for="password" class="text-sm font-medium">Password</Label>
+            <Label for="password" class="text-sm font-medium">密码</Label>
             <div class="relative">
               <Input
                 id="password"
@@ -172,11 +185,11 @@ const onSubmit = handleSubmit(async (formValues) => {
             <div class="flex items-center space-x-2">
               <Checkbox id="remember" />
               <Label for="remember" class="text-sm font-normal cursor-pointer">
-                Remember for 30 days
+                记住我 30 天
               </Label>
             </div>
-            <router-link to="/forgot-password" class="text-sm text-primary hover:underline font-medium">
-              Forgot password?
+            <router-link to="/auth/forgot-password" class="text-sm text-primary hover:underline font-medium">
+              忘记密码？
             </router-link>
           </div>
 
@@ -186,17 +199,33 @@ const onSubmit = handleSubmit(async (formValues) => {
 
           <InteractiveHoverButton
             type="submit"
-            :text="isLoading ? 'Signing in...' : 'Log in'"
+            :text="isLoading ? '登录中...' : '登录'"
             class="w-full h-12 text-base font-medium"
             :disabled="isLoading"
           />
         </form>
 
+        <!-- Social Login -->
+        <div class="mt-6">
+          <InteractiveHoverButton
+            type="button"
+            text="使用 Google 登录"
+            class="w-full h-12 border-border/60"
+            @click="handleGoogleSignIn"
+          >
+            <template #icon>
+              <svg class="h-5 w-5" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 76.2C322.3 113.2 289.4 96 248 96c-88.8 0-160.1 71.9-160.1 160.1s71.3 160.1 160.1 160.1c98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 26.9 3.9 41.4z"></path>
+              </svg>
+            </template>
+          </InteractiveHoverButton>
+        </div>
+
         <!-- Sign Up Link -->
         <div class="text-center text-sm text-muted-foreground mt-8">
-          Don't have an account?
-          <router-link to="/signup" class="text-foreground font-medium hover:underline">
-            Sign Up
+          还没有账号？
+          <router-link to="/auth/signup" class="text-foreground font-medium hover:underline">
+            立即注册
           </router-link>
         </div>
       </div>

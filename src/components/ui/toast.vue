@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useToastStore } from '@/stores/toast'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 import { X } from 'lucide-vue-next'
 
 const toastStore = useToastStore()

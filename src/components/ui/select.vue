@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, provide } from 'vue'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 import { ChevronDown } from 'lucide-vue-next'
 
 interface Props {

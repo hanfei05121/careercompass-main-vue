@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ArrowRight } from 'lucide-vue-next'
-import { cn } from '@/lib/utils'
+import { cn } from '@/utils'
 
 interface Props {
   /** 按钮文案 */

@@ -1,6 +1,22 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import AppSidebar from '@/components/AppSidebar.vue'
+import LangSwitch from '@/components/common/LangSwitch.vue'
+import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+
+const authStore = useAuthStore()
+const { t } = useI18n()
+const router = useRouter()
+
+/** 退出登录并回到登录页 */
+const handleLogout = async () => {
+  await authStore.logout()
+  ElMessage.success(t('auth.logoutSuccess'))
+  router.replace('/auth/login')
+}
 </script>
 
 <template>
@@ -13,11 +29,36 @@ import AppSidebar from '@/components/AppSidebar.vue'
           <!-- Search bar placeholder -->
         </div>
         <div class="flex-1 flex items-center justify-end gap-4">
-          <!-- Notifications, Theme toggle, User nav -->
+          <LangSwitch />
+          <el-dropdown v-if="authStore.isAuthenticated" trigger="click">
+            <button
+              type="button"
+              class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border/60 bg-card text-sm font-semibold uppercase"
+            >
+              {{ (authStore.userProfile?.displayName ?? 'U').slice(0, 1) }}
+            </button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item disabled>
+                  {{ authStore.userProfile?.email }}
+                </el-dropdown-item>
+                <el-dropdown-item divided @click="router.push('/profile')">
+                  {{ t('menu.profile') }}
+                </el-dropdown-item>
+                <el-dropdown-item @click="handleLogout">
+                  {{ t('common.signOut') }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </header>
       <main class="flex-1 p-4 md:p-6 overflow-auto">
-        <RouterView />
+        <RouterView v-slot="{ Component }">
+          <transition name="fade-slide" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </RouterView>
       </main>
     </div>
   </div>
