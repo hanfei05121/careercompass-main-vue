@@ -172,10 +172,13 @@ const handleGoogleSignIn = async () => {
               <button
                 type="button"
                 @click="showPassword = !showPassword"
+                :title="showPassword ? '隐藏密码' : '显示密码'"
+                :aria-label="showPassword ? '隐藏密码' : '显示密码'"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
-                <EyeOff v-if="showPassword" class="h-5 w-5" />
-                <Eye v-else class="h-5 w-5" />
+                <!-- 图标表示「当前状态」：明文可见=睁眼，掩码隐藏=闭眼 -->
+                <Eye v-if="showPassword" class="h-5 w-5" />
+                <EyeOff v-else class="h-5 w-5" />
               </button>
             </div>
             <p v-if="errors.password" class="text-sm text-destructive">{{ errors.password }}</p>

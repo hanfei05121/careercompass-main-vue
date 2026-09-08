@@ -1,4 +1,12 @@
 /** 表单类公共样式 */
+
+/** 隐藏 Edge/Chromium 在密码输入框右侧渲染的原生"显示密码"小眼睛，
+ *  避免和自定义的眼睛图标叠在一起出现两个图标 */
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
+}
+
 .form-item-inline {
   display: flex;
   align-items: center;

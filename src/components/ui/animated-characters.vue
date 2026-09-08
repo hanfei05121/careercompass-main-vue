@@ -45,10 +45,10 @@ const orangeRef = ref<HTMLDivElement | null>(null)
 /* ------------------------------------------------------------------ *
  * 派生状态
  * ------------------------------------------------------------------ */
-/** 正在输入密码且密码是隐藏的（圆点）——紫色长条会"站起来探头" */
-const isHidingPassword = computed(() => props.passwordLength > 0 && !props.showPassword)
-/** 正在输入密码且密码明文可见——四个角色集体把视线移向左上角 */
-const isPasswordVisible = computed(() => props.passwordLength > 0 && props.showPassword)
+/** 密码处于掩码隐藏状态（圆点）——四个角色集体移开视线，"不该看" */
+const isLookingAway = computed(() => props.passwordLength > 0 && !props.showPassword)
+/** 密码明文可见——紫色长条会"站起来探头"偷看输入框 */
+const isPeekingAtPassword = computed(() => props.passwordLength > 0 && props.showPassword)
 
 const calculatePosition = (el: HTMLDivElement | null) => {
   if (!el) return { faceX: 0, faceY: 0, bodySkew: 0 }
@@ -154,7 +154,7 @@ watch(
   [() => props.passwordLength, () => props.showPassword],
   () => {
     stopPeeking()
-    if (props.passwordLength > 0 && props.showPassword) {
+    if (props.passwordLength > 0 && !props.showPassword) {
       schedulePeek()
     }
   },
@@ -183,23 +183,27 @@ onUnmounted(() => {
  * 眼睛的强制注视方向
  * ------------------------------------------------------------------ */
 const purpleForceLookX = computed(() => {
-  if (isPasswordVisible.value) return isPurplePeeking.value ? 4 : -4
+  if (isPeekingAtPassword.value) return 4
+  if (isLookingAway.value) return isPurplePeeking.value ? 4 : -4
   if (isLookingAtEachOther.value) return 3
   return undefined
 })
 const purpleForceLookY = computed(() => {
-  if (isPasswordVisible.value) return isPurplePeeking.value ? 5 : -4
+  if (isPeekingAtPassword.value) return 5
+  if (isLookingAway.value) return isPurplePeeking.value ? 5 : -4
   if (isLookingAtEachOther.value) return 4
   return undefined
 })
 
 const blackForceLookX = computed(() => {
-  if (isPasswordVisible.value) return -4
+  if (isPeekingAtPassword.value) return 3
+  if (isLookingAway.value) return -4
   if (isLookingAtEachOther.value) return 0
   return undefined
 })
 const blackForceLookY = computed(() => {
-  if (isPasswordVisible.value) return -4
+  if (isPeekingAtPassword.value) return 3
+  if (isLookingAway.value) return -4
   if (isLookingAtEachOther.value) return -4
   return undefined
 })
@@ -214,13 +218,13 @@ const blackForceLookY = computed(() => {
       :style="{
         left: '70px',
         width: '180px',
-        height: isTyping || isHidingPassword ? '440px' : '400px',
+        height: isTyping || isPeekingAtPassword ? '440px' : '400px',
         backgroundColor: '#6C3FF5',
         borderRadius: '10px 10px 0 0',
         zIndex: 1,
-        transform: isPasswordVisible
+        transform: isLookingAway
           ? 'skewX(0deg)'
-          : isTyping || isHidingPassword
+          : isTyping || isPeekingAtPassword
             ? `skewX(${purplePos.bodySkew - 12}deg) translateX(40px)`
             : `skewX(${purplePos.bodySkew}deg)`,
         transformOrigin: 'bottom center',
@@ -229,8 +233,8 @@ const blackForceLookY = computed(() => {
       <div
         class="absolute flex gap-8 transition-all duration-700 ease-in-out"
         :style="{
-          left: isPasswordVisible ? '20px' : isLookingAtEachOther ? '55px' : `${45 + purplePos.faceX}px`,
-          top: isPasswordVisible ? '35px' : isLookingAtEachOther ? '65px' : `${40 + purplePos.faceY}px`,
+          left: isLookingAway ? '20px' : isLookingAtEachOther ? '55px' : `${45 + purplePos.faceX}px`,
+          top: isLookingAway ? '35px' : isLookingAtEachOther ? '65px' : `${40 + purplePos.faceY}px`,
         }"
       >
         <EyeBall
@@ -267,11 +271,11 @@ const blackForceLookY = computed(() => {
         backgroundColor: '#2D2D2D',
         borderRadius: '8px 8px 0 0',
         zIndex: 2,
-        transform: isPasswordVisible
+        transform: isLookingAway
           ? 'skewX(0deg)'
           : isLookingAtEachOther
             ? `skewX(${blackPos.bodySkew * 1.5 + 10}deg) translateX(20px)`
-            : isTyping || isHidingPassword
+            : isTyping || isPeekingAtPassword
               ? `skewX(${blackPos.bodySkew * 1.5}deg)`
               : `skewX(${blackPos.bodySkew}deg)`,
         transformOrigin: 'bottom center',
@@ -280,8 +284,8 @@ const blackForceLookY = computed(() => {
       <div
         class="absolute flex gap-6 transition-all duration-700 ease-in-out"
         :style="{
-          left: isPasswordVisible ? '10px' : isLookingAtEachOther ? '32px' : `${26 + blackPos.faceX}px`,
-          top: isPasswordVisible ? '28px' : isLookingAtEachOther ? '12px' : `${32 + blackPos.faceY}px`,
+          left: isLookingAway ? '10px' : isLookingAtEachOther ? '32px' : `${26 + blackPos.faceX}px`,
+          top: isLookingAway ? '28px' : isLookingAtEachOther ? '12px' : `${32 + blackPos.faceY}px`,
         }"
       >
         <EyeBall
@@ -318,30 +322,30 @@ const blackForceLookY = computed(() => {
         zIndex: 3,
         backgroundColor: '#FF9B6B',
         borderRadius: '120px 120px 0 0',
-        transform: isPasswordVisible ? 'skewX(0deg)' : `skewX(${orangePos.bodySkew}deg)`,
+        transform: isLookingAway ? 'skewX(0deg)' : `skewX(${orangePos.bodySkew}deg)`,
         transformOrigin: 'bottom center',
       }"
     >
       <div
         class="absolute flex gap-8 transition-all duration-200 ease-out"
         :style="{
-          left: isPasswordVisible ? '50px' : `${82 + orangePos.faceX}px`,
-          top: isPasswordVisible ? '85px' : `${90 + orangePos.faceY}px`,
+          left: isLookingAway ? '50px' : `${82 + orangePos.faceX}px`,
+          top: isLookingAway ? '85px' : `${90 + orangePos.faceY}px`,
         }"
       >
         <Pupil
           :size="12"
           :max-distance="5"
           pupil-color="#2D2D2D"
-          :force-look-x="isPasswordVisible ? -5 : undefined"
-          :force-look-y="isPasswordVisible ? -4 : undefined"
+          :force-look-x="isLookingAway ? -5 : isPeekingAtPassword ? 4 : undefined"
+          :force-look-y="isLookingAway ? -4 : isPeekingAtPassword ? 4 : undefined"
         />
         <Pupil
           :size="12"
           :max-distance="5"
           pupil-color="#2D2D2D"
-          :force-look-x="isPasswordVisible ? -5 : undefined"
-          :force-look-y="isPasswordVisible ? -4 : undefined"
+          :force-look-x="isLookingAway ? -5 : isPeekingAtPassword ? 4 : undefined"
+          :force-look-y="isLookingAway ? -4 : isPeekingAtPassword ? 4 : undefined"
         />
       </div>
     </div>
@@ -357,38 +361,38 @@ const blackForceLookY = computed(() => {
         backgroundColor: '#E8D754',
         borderRadius: '70px 70px 0 0',
         zIndex: 4,
-        transform: isPasswordVisible ? 'skewX(0deg)' : `skewX(${yellowPos.bodySkew}deg)`,
+        transform: isLookingAway ? 'skewX(0deg)' : `skewX(${yellowPos.bodySkew}deg)`,
         transformOrigin: 'bottom center',
       }"
     >
       <div
         class="absolute flex gap-6 transition-all duration-200 ease-out"
         :style="{
-          left: isPasswordVisible ? '20px' : `${52 + yellowPos.faceX}px`,
-          top: isPasswordVisible ? '35px' : `${40 + yellowPos.faceY}px`,
+          left: isLookingAway ? '20px' : `${52 + yellowPos.faceX}px`,
+          top: isLookingAway ? '35px' : `${40 + yellowPos.faceY}px`,
         }"
       >
         <Pupil
           :size="12"
           :max-distance="5"
           pupil-color="#2D2D2D"
-          :force-look-x="isPasswordVisible ? -5 : undefined"
-          :force-look-y="isPasswordVisible ? -4 : undefined"
+          :force-look-x="isLookingAway ? -5 : isPeekingAtPassword ? 4 : undefined"
+          :force-look-y="isLookingAway ? -4 : isPeekingAtPassword ? 4 : undefined"
         />
         <Pupil
           :size="12"
           :max-distance="5"
           pupil-color="#2D2D2D"
-          :force-look-x="isPasswordVisible ? -5 : undefined"
-          :force-look-y="isPasswordVisible ? -4 : undefined"
+          :force-look-x="isLookingAway ? -5 : isPeekingAtPassword ? 4 : undefined"
+          :force-look-y="isLookingAway ? -4 : isPeekingAtPassword ? 4 : undefined"
         />
       </div>
       <!-- 嘴巴（一条横线） -->
       <div
         class="absolute w-20 h-[4px] bg-[#2D2D2D] rounded-full transition-all duration-200 ease-out"
         :style="{
-          left: isPasswordVisible ? '10px' : `${40 + yellowPos.faceX}px`,
-          top: isPasswordVisible ? '88px' : `${88 + yellowPos.faceY}px`,
+          left: isLookingAway ? '10px' : `${40 + yellowPos.faceX}px`,
+          top: isLookingAway ? '88px' : `${88 + yellowPos.faceY}px`,
         }"
       />
     </div>
