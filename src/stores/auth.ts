@@ -63,7 +63,7 @@ export const useAuthStore = defineStore('auth', () => {
   const role = ref<UserRole | null>(enabled ? null : GUEST_PROFILE.role)
   const userProfile = ref<UserProfile | null>(enabled ? null : GUEST_PROFILE)
 
-  const isAuthenticated = computed(() => (enabled ? !!user.value : true))
+  const isAuthenticated = computed(() => !!user.value)
   const isAdmin = computed(() => role.value === 'admin')
   const isEmployer = computed(() => role.value === 'employer')
 
@@ -269,10 +269,9 @@ export const useAuthStore = defineStore('auth', () => {
   /** 退出登录 */
   const logout = async () => {
     if (!enabled) {
+      // 本地模拟模式：清空登录态，回到未登录状态以便跳转登录页
       applyProfile(null)
-      user.value = GUEST_USER
-      role.value = GUEST_PROFILE.role
-      userProfile.value = GUEST_PROFILE
+      user.value = null
       return
     }
 

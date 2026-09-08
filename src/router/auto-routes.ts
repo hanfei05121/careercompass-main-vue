@@ -56,6 +56,12 @@ const collectPages = (): PageEntry[] => {
       const relative = file.replace(/^..\/views\//, '').replace(/\.vue$/, '')
       const parts = relative.split('/')
 
+      // components 目录与 _ 开头的目录/文件属于模块私有，不作为页面路由
+      const isPrivate =
+        parts.some((part) => part === 'components' || part.startsWith('_')) ||
+        (parts.at(-1) ?? '').startsWith('_')
+      if (isPrivate) return
+
       let layout = ''
       if (parts[0] === 'app') {
         layout = 'AppLayout'

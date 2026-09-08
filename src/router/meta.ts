@@ -7,7 +7,7 @@ import type { AppRouteMeta } from './types'
  *      views/index.vue                 ->  /
  *      views/auth/Login.vue            ->  /auth/login        （公开页）
  *      views/app/Dashboard.vue         ->  /dashboard          （AppLayout 分组，需登录）
- *      views/app/opportunities/[id].vue->  /opportunities/:id  （动态段）
+ *      views/app/opportunities/detail/[id].vue->  /opportunities/detail/:id  （动态段）
  * 2. app/ 目录 = 受保护业务区，自动套用 AppLayout 并要求登录；
  * 3. 其余目录（auth、根级公开页）不套布局；
  * 4. 新增页面只需新建 .vue 文件，无需手动注册路由。
@@ -42,7 +42,7 @@ export const pageTitleMap: Record<string, string> = {
   '/': 'menu.home',
   '/dashboard': 'menu.dashboard',
   '/opportunities': 'menu.opportunities',
-  '/opportunities/:id': 'menu.opportunityDetail',
+  '/opportunities/detail/:id': 'menu.opportunityDetail',
   '/employers': 'menu.employers',
   '/applications': 'menu.applications',
   '/ai-tools': 'menu.aiTools',

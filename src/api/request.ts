@@ -1,5 +1,4 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
-import { ElMessage } from 'element-plus'
 import { appEnv } from '@/config'
 import { AUTH_HEADER, STORAGE_KEYS, TOKEN_PREFIX } from '@/constants'
 import { localCache } from '@/utils/storage'

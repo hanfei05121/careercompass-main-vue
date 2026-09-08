@@ -36,8 +36,8 @@ const loginSchema = toTypedSchema(
 const { handleSubmit, errors, defineField } = useForm({
   validationSchema: loginSchema,
   initialValues: {
-    email: '',
-    password: '',
+    email: 'admin@qq.com',
+    password: '123456',
   },
 })
 

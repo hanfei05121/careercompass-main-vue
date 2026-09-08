@@ -26,7 +26,9 @@ export default defineConfig(({ mode }: ConfigEnv) => {
       // API 自动按需引入（ElMessage / ElMessageBox / Vue 组合式 API 等）
       AutoImport({
         imports: ['vue', 'vue-router', 'pinia', 'vue-i18n'],
-        resolvers: [ElementPlusResolver()],
+        // ElMessage / ElMessageBox 在脚本中函数式调用，模板解析不处理，
+        // 须在此注入其样式，否则弹窗/提示无样式不可见
+        resolvers: [ElementPlusResolver({ importStyle: 'css' })],
         dts: 'src/types/auto-imports.d.ts',
         eslintrc: {
           enabled: true,

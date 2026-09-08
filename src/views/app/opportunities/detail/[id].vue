@@ -2,7 +2,7 @@
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
-const opportunityId = route.params.id
+const opportunityId = String(route.params.id)
 </script>
 
 <template>

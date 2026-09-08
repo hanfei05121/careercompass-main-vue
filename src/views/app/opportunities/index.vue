@@ -6,81 +6,12 @@ import Card from '@/components/ui/card.vue'
 import CardHeader from '@/components/ui/card-header.vue'
 import CardTitle from '@/components/ui/card-title.vue'
 import CardContent from '@/components/ui/card-content.vue'
-import Button from '@/components/ui/button.vue'
-import Badge from '@/components/ui/badge.vue'
 import Input from '@/components/ui/input.vue'
 import Select from '@/components/ui/select.vue'
-import { MapPin, Heart, Loader2, SlidersHorizontal } from 'lucide-vue-next'
+import { Loader2, SlidersHorizontal } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
-
-interface Opportunity {
-  id: string
-  title: string
-  employerName: string
-  location: string
-  type: string
-  skills?: string[] | string
-  createdAt?: any
-  [key: string]: any
-}
-
-// Firebase 未配置时展示的演示数据，保证登录后页面可正常浏览
-const DEMO_OPPORTUNITIES: Opportunity[] = [
-  {
-    id: 'demo-1',
-    title: 'Software Engineer Intern',
-    employerName: 'TechNova Labs',
-    location: 'Remote',
-    type: 'Internship',
-    skills: ['JavaScript', 'TypeScript', 'Vue'],
-    status: 'Active',
-  },
-  {
-    id: 'demo-2',
-    title: 'UX Design Volunteer',
-    employerName: 'Bright Future NGO',
-    location: 'New York',
-    type: 'Volunteer',
-    skills: ['Figma', 'Prototyping'],
-    status: 'Active',
-  },
-  {
-    id: 'demo-3',
-    title: 'Data Analyst',
-    employerName: 'FinData Solutions',
-    location: 'Remote',
-    type: 'Full-time',
-    skills: ['SQL', 'Python', 'Tableau'],
-    status: 'Active',
-  },
-  {
-    id: 'demo-4',
-    title: 'Community Outreach Coordinator',
-    employerName: 'CityServe',
-    location: 'Chicago',
-    type: 'Part-time',
-    skills: ['Communication', 'Event Planning'],
-    status: 'Active',
-  },
-  {
-    id: 'demo-5',
-    title: 'Frontend Developer (Contract)',
-    employerName: 'PixelForge',
-    location: 'Remote',
-    type: 'Contract',
-    skills: ['React', 'CSS', 'Node.js'],
-    status: 'Active',
-  },
-  {
-    id: 'demo-6',
-    title: 'Marketing Associate',
-    employerName: 'GreenLeaf Media',
-    location: 'Austin',
-    type: 'Full-time',
-    skills: ['SEO', 'Content', 'Analytics'],
-    status: 'Active',
-  },
-]
+import OpportunityCard from './components/OpportunityCard.vue'
+import { DEMO_OPPORTUNITIES, type Opportunity } from './types'
 
 const router = useRouter()
 const opportunities = ref<Opportunity[]>([])
@@ -118,7 +49,7 @@ onMounted(async () => {
 })
 
 const viewOpportunity = (id: string) => {
-  router.push(`/opportunities/${id}`)
+  router.push(`/opportunities/detail/${id}`)
 }
 </script>
 
@@ -171,31 +102,12 @@ const viewOpportunity = (id: string) => {
     </div>
 
     <div v-else class="grid gap-4">
-      <Card
+      <OpportunityCard
         v-for="opp in opportunities"
         :key="opp.id"
-        class="hover:shadow-lg transition-shadow cursor-pointer"
-        @click="viewOpportunity(opp.id)"
-      >
-        <CardContent class="p-6">
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <h3 class="font-semibold text-lg mb-1">{{ opp.title }}</h3>
-              <p class="text-muted-foreground mb-2">{{ opp.employerName }}</p>
-              <div class="flex items-center gap-4 text-sm text-muted-foreground">
-                <span class="flex items-center gap-1">
-                  <MapPin class="h-4 w-4" />
-                  {{ opp.location || 'Remote' }}
-                </span>
-                <Badge variant="secondary">{{ opp.type }}</Badge>
-              </div>
-            </div>
-            <Button variant="outline" size="sm">
-              <Heart class="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        :opportunity="opp"
+        @click="viewOpportunity"
+      />
     </div>
   </div>
 </template>

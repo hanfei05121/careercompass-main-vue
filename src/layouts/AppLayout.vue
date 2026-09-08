@@ -5,7 +5,6 @@ import LangSwitch from '@/components/common/LangSwitch.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 
 const authStore = useAuthStore()
 const { t } = useI18n()
@@ -13,6 +12,15 @@ const router = useRouter()
 
 /** 退出登录并回到登录页 */
 const handleLogout = async () => {
+  try {
+    await ElMessageBox.confirm(t('common.logoutConfirmMessage'), t('common.logoutConfirmTitle'), {
+      confirmButtonText: t('common.logoutConfirmButton'),
+      cancelButtonText: t('common.cancel'),
+      type: 'warning',
+    })
+  } catch {
+    return // 用户取消
+  }
   await authStore.logout()
   ElMessage.success(t('auth.logoutSuccess'))
   router.replace('/auth/login')
