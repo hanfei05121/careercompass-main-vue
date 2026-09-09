@@ -2,12 +2,10 @@
 import { useRouter } from 'vue-router'
 import { ArrowRight, Layers } from 'lucide-vue-next'
 import BasePage from '@/components/common/BasePage.vue'
-import { CARD_ANIMATIONS, DECK_CARDS } from './types'
+import MiniPreview from './components/MiniPreview.vue'
+import { CARD_ANIMATIONS } from './types'
 
 const router = useRouter()
-
-/** 列表缩略图用的三张演示卡（固定取前 3 张，避免每格都不同） */
-const previewCards = DECK_CARDS.slice(0, 3)
 
 const open = (type: string) => {
   router.push(`/cards/${type}`)
@@ -46,19 +44,9 @@ const open = (type: string) => {
           </span>
         </div>
 
-        <!-- 静态缩略：三张渐变卡叠放，示意该动效的排布 -->
-        <div class="relative mb-4 h-24">
-          <div
-            v-for="(card, k) in previewCards"
-            :key="card.id"
-            class="absolute left-1/2 top-1/2 h-20 w-16 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-gradient-to-br shadow-md transition-transform duration-300"
-            :class="card.gradient"
-            :style="{
-              transform: `translate(-50%, -50%) rotate(${(k - 1) * 10}deg) translateX(${(k - 1) * 26}px) scale(${1 - k * 0.04})`,
-              opacity: 1 - k * 0.18,
-              zIndex: 10 - k,
-            }"
-          />
+        <!-- 动态缩略：嵌入真实动画组件，自动轮播预览 -->
+        <div class="relative mb-4 h-40 overflow-hidden rounded-xl bg-muted/40">
+          <MiniPreview :type="item.type" />
         </div>
 
         <h3 class="text-lg font-semibold tracking-tight">{{ item.name }}</h3>

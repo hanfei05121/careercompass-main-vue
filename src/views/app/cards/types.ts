@@ -144,7 +144,7 @@ export const CARD_ANIMATIONS: CardAnimationMeta[] = [
     name: '纵向滚轮',
     enName: 'Wheel scroll',
     action: '卡片像滚轮一样上下滚动切换，正对用户的卡片最大。',
-    visual: '上下卡片向后弯曲，滚动的空间感强烈。',
+    visual: '上下卡片紧密层叠并逐渐旋转扭转，越远越小越模糊，景深感强烈。',
   },
   {
     type: 'cube-rotate',
