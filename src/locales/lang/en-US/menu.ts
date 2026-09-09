@@ -3,7 +3,6 @@ export default {
   dashboard: 'Dashboard',
   opportunities: 'Opportunities',
   opportunityDetail: 'Opportunity Detail',
-  employers: 'Employers',
   applications: 'My Applications',
   aiTools: 'AI Tools',
   saved: 'Saved',

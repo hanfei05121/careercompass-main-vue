@@ -3,7 +3,6 @@ export default {
   dashboard: '工作台',
   opportunities: '职位机会',
   opportunityDetail: '职位详情',
-  employers: '企业',
   applications: '我的申请',
   aiTools: 'AI 工具',
   saved: '收藏',

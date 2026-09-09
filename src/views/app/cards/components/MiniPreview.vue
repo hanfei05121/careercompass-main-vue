@@ -11,6 +11,11 @@ import CubeRotate from './animations/CubeRotate.vue'
 import PeekSide from './animations/PeekSide.vue'
 import ExplodeGather from './animations/ExplodeGather.vue'
 import OvershootSlide from './animations/OvershootSlide.vue'
+import TinderSwipe from './animations/TinderSwipe.vue'
+import CarouselBelt from './animations/CarouselBelt.vue'
+import PageTurn from './animations/PageTurn.vue'
+import IosSwitcher from './animations/IosSwitcher.vue'
+import DealDrop from './animations/DealDrop.vue'
 import { DECK_CARDS, type CardAnimationType } from '../types'
 
 /** 列表封面用的迷你预览：嵌入真实动画组件，缩小后自动轮播 */
@@ -27,6 +32,11 @@ const COMPONENTS: Record<CardAnimationType, Component> = {
   'peek-side': PeekSide,
   'explode-gather': ExplodeGather,
   'overshoot-slide': OvershootSlide,
+  'tinder-swipe': TinderSwipe,
+  'carousel-belt': CarouselBelt,
+  'page-turn': PageTurn,
+  'ios-switcher': IosSwitcher,
+  'deal-drop': DealDrop,
 }
 
 const currentComponent = computed(() => COMPONENTS[props.type])

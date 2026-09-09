@@ -43,7 +43,6 @@ export const pageTitleMap: Record<string, string> = {
   '/dashboard': 'menu.dashboard',
   '/opportunities': 'menu.opportunities',
   '/opportunities/detail/:id': 'menu.opportunityDetail',
-  '/employers': 'menu.employers',
   '/applications': 'menu.applications',
   '/ai-tools': 'menu.aiTools',
   '/saved': 'menu.saved',
@@ -69,7 +68,6 @@ export const pageTitleMap: Record<string, string> = {
 export const menuIconMap: Record<string, string> = {
   '/dashboard': 'LayoutDashboard',
   '/opportunities': 'Briefcase',
-  '/employers': 'Building2',
   '/applications': 'Kanban',
   '/ai-tools': 'Rocket',
   '/saved': 'Heart',

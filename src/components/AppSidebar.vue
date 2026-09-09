@@ -35,7 +35,6 @@ interface SidebarLink {
 const employeeLinks: SidebarLink[] = [
   { labelKey: 'menu.dashboard', href: '/dashboard', icon: LayoutDashboard },
   { labelKey: 'menu.opportunities', href: '/opportunities', icon: Briefcase },
-  { labelKey: 'menu.employers', href: '/employers', icon: Building2 },
   { labelKey: 'menu.applications', href: '/applications', icon: Kanban },
   { labelKey: 'menu.aiTools', href: '/ai-tools', icon: Rocket },
   { labelKey: 'menu.saved', href: '/saved', icon: Heart },

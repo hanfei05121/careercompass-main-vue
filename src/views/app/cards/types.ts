@@ -16,7 +16,7 @@ export interface DeckCard {
   gradient: string
 }
 
-/** 10 种卡片滑动动画的类型标识（同时作为路由 /cards/:type 的参数） */
+/** 15 种卡片滑动动画的类型标识（同时作为路由 /cards/:type 的参数） */
 export type CardAnimationType =
   | 'stack-swipe'
   | 'coverflow'
@@ -28,6 +28,11 @@ export type CardAnimationType =
   | 'peek-side'
   | 'explode-gather'
   | 'overshoot-slide'
+  | 'tinder-swipe'
+  | 'carousel-belt'
+  | 'page-turn'
+  | 'ios-switcher'
+  | 'deal-drop'
 
 /** 动画清单条目：列表页展示 + 详情页标题/说明 */
 export interface CardAnimationMeta {
@@ -173,6 +178,41 @@ export const CARD_ANIMATIONS: CardAnimationMeta[] = [
     enName: 'Overshoot slide',
     action: '新卡片从一侧滑入，会冲过中线一点，再回弹到正中。',
     visual: '过冲后回弹，弹性反馈明显，动作有力量感。',
+  },
+  {
+    type: 'tinder-swipe',
+    name: '探探甩卡',
+    enName: 'Tinder swipe',
+    action: '顶卡全程跟手：随手指位移并旋转，甩得够远就飞出画面外，否则回弹。',
+    visual: '拖动跟手感强，飞出时带旋转，像探探左右滑卡。',
+  },
+  {
+    type: 'carousel-belt',
+    name: '环绕传送带',
+    enName: 'Carousel belt',
+    action: '卡片绕满 3D 圆周，拖动整圈旋转，转到正前方的卡片被放大突出。',
+    visual: '立体环绕感强，两侧卡片透视扑出、首尾循环。',
+  },
+  {
+    type: 'page-turn',
+    name: '双页翻书',
+    enName: 'Page turn',
+    action: '对开页面像翻书一样绕书脊翻过去，背面露出下一页内容。',
+    visual: '书页翻动自然、不镜像，左右拖动都可翻页。',
+  },
+  {
+    type: 'ios-switcher',
+    name: 'iOS 缩放切换',
+    enName: 'iOS switcher',
+    action: '当前卡片居中放大聚焦，左右相邻卡缩小下沉到两侧叠放。',
+    visual: '景深与层级强，像 iOS 应用切换器一样缩放过渡。',
+  },
+  {
+    type: 'deal-drop',
+    name: '发牌掉落',
+    enName: 'Deal drop',
+    action: '切换时新牌从上方旋转飞落后砸在牌堆顶，旧的顶牌被压下去一层。',
+    visual: '竖向堆叠、发牌入堆，顶牌掉落有砸下感。',
   },
 ]
 

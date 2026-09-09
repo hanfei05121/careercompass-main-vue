@@ -20,6 +20,12 @@ import CubeRotate from './components/animations/CubeRotate.vue'
 import PeekSide from './components/animations/PeekSide.vue'
 import ExplodeGather from './components/animations/ExplodeGather.vue'
 import OvershootSlide from './components/animations/OvershootSlide.vue'
+import TinderSwipe from './components/animations/TinderSwipe.vue'
+import CarouselBelt from './components/animations/CarouselBelt.vue'
+import PageTurn from './components/animations/PageTurn.vue'
+import IosSwitcher from './components/animations/IosSwitcher.vue'
+import DealDrop from './components/animations/DealDrop.vue'
+import LiquidGlassButton from './components/LiquidGlassButton.vue'
 import {
   CARD_ANIMATIONS,
   DECK_CARDS,
@@ -39,6 +45,11 @@ const COMPONENTS: Record<CardAnimationType, Component> = {
   'peek-side': PeekSide,
   'explode-gather': ExplodeGather,
   'overshoot-slide': OvershootSlide,
+  'tinder-swipe': TinderSwipe,
+  'carousel-belt': CarouselBelt,
+  'page-turn': PageTurn,
+  'ios-switcher': IosSwitcher,
+  'deal-drop': DealDrop,
 }
 
 const route = useRoute()
@@ -133,25 +144,17 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="inline-flex items-center gap-1 rounded-lg border border-border/60 px-3 py-1.5 text-sm transition-colors hover:bg-muted"
-            @click="goAnimation(-1)"
-          >
+          <LiquidGlassButton @click="goAnimation(-1)">
             <ChevronLeft class="h-4 w-4" />
             上一个动效
-          </button>
+          </LiquidGlassButton>
           <span class="px-1 text-sm text-muted-foreground">
             {{ order }} / {{ CARD_ANIMATIONS.length }}
           </span>
-          <button
-            type="button"
-            class="inline-flex items-center gap-1 rounded-lg border border-border/60 px-3 py-1.5 text-sm transition-colors hover:bg-muted"
-            @click="goAnimation(1)"
-          >
+          <LiquidGlassButton @click="goAnimation(1)">
             下一个动效
             <ChevronRight class="h-4 w-4" />
-          </button>
+          </LiquidGlassButton>
         </div>
       </div>
 
@@ -175,31 +178,19 @@ onBeforeUnmount(() => {
 
       <!-- 控制条 -->
       <div class="flex flex-wrap items-center justify-center gap-3">
-        <button
-          type="button"
-          class="inline-flex items-center gap-1 rounded-lg border border-border/60 px-4 py-2 text-sm transition-colors hover:bg-muted"
-          @click="trigger('prev')"
-        >
+        <LiquidGlassButton @click="trigger('prev')">
           <ChevronLeft class="h-4 w-4" />
           上一张
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-1 rounded-lg border border-border/60 px-4 py-2 text-sm transition-colors hover:bg-muted"
-          @click="trigger('next')"
-        >
+        </LiquidGlassButton>
+        <LiquidGlassButton @click="trigger('next')">
           下一张
           <ChevronRight class="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          class="inline-flex items-center gap-1 rounded-lg border border-border/60 px-4 py-2 text-sm transition-colors hover:bg-muted"
-          @click="toggleAuto"
-        >
+        </LiquidGlassButton>
+        <LiquidGlassButton @click="toggleAuto">
           <Pause v-if="autoPlay" class="h-4 w-4" />
           <Play v-else class="h-4 w-4" />
           {{ autoPlay ? '暂停播放' : '自动播放' }}
-        </button>
+        </LiquidGlassButton>
       </div>
 
       <div class="rounded-2xl border border-border/60 bg-card p-4">
@@ -215,14 +206,10 @@ onBeforeUnmount(() => {
     <div v-else class="rounded-2xl border border-border/60 bg-card p-10 text-center">
       <p class="text-lg font-medium">没有找到这个动效</p>
       <p class="mt-1 text-sm text-muted-foreground">它可能已被移除，或链接拼写有误。</p>
-      <button
-        type="button"
-        class="mt-4 inline-flex items-center gap-1 rounded-lg border border-border/60 px-4 py-2 text-sm transition-colors hover:bg-muted"
-        @click="router.push('/cards')"
-      >
+      <LiquidGlassButton class="mt-4" @click="router.push('/cards')">
         <ArrowLeft class="h-4 w-4" />
         返回动效列表
-      </button>
+      </LiquidGlassButton>
     </div>
   </div>
 </template>

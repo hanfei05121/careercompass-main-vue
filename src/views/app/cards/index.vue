@@ -15,7 +15,7 @@ const open = (type: string) => {
 <template>
   <BasePage
     title="卡片滑动动效"
-    subtitle="10 种卡片切换动画，点进去可拖拽体验真实效果"
+    subtitle="15 种卡片切换动画，点进去可拖拽体验真实效果"
     class="container mx-auto"
   >
     <template #actions>
