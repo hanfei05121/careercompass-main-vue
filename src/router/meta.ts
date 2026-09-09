@@ -50,6 +50,8 @@ export const pageTitleMap: Record<string, string> = {
   '/profile': 'menu.profile',
   '/inbox': 'menu.inbox',
   '/insights': 'menu.insights',
+  '/cards': 'menu.cards',
+  '/cards/:type': 'menu.cards',
   '/employer/dashboard': 'menu.employerDashboard',
   '/employer/postings': 'menu.postings',
   '/employer/analytics': 'menu.analytics',

@@ -10,6 +10,7 @@ export default {
   profile: '个人资料',
   inbox: '消息',
   insights: '数据洞察',
+  cards: '卡片动效',
   employerDashboard: '企业工作台',
   postings: '职位管理',
   analytics: '数据分析',

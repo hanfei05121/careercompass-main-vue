@@ -17,6 +17,7 @@ import {
   MessageSquare,
   BarChart3,
   Shield,
+  Layers,
 } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
@@ -41,6 +42,7 @@ const employeeLinks: SidebarLink[] = [
   { labelKey: 'menu.profile', href: '/profile', icon: User },
   { labelKey: 'menu.inbox', href: '/inbox', icon: MessageSquare },
   { labelKey: 'menu.insights', href: '/insights', icon: BarChart3 },
+  { labelKey: 'menu.cards', href: '/cards', icon: Layers },
 ]
 
 const employerLinks: SidebarLink[] = [

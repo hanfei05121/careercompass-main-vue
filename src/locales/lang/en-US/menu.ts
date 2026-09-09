@@ -10,6 +10,7 @@ export default {
   profile: 'Profile',
   inbox: 'Inbox',
   insights: 'Insights',
+  cards: 'Card Motion',
   employerDashboard: 'Employer Dashboard',
   postings: 'Job Postings',
   analytics: 'Analytics',
