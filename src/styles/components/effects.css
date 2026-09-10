@@ -183,7 +183,7 @@ html.light [data-theme-burn='loader'] {
 /* 减少透明 / 减少动效时同样退回毛玻璃 */
 @media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
   .effect {
-    background: color-mix(in oklch, hsl(var(--card)) 78%, transparent);
+    /* background: color-mix(in oklch, hsl(var(--card)) 78%, transparent); */
     -webkit-backdrop-filter: blur(20px) saturate(1.2);
     backdrop-filter: blur(20px) saturate(1.2);
   }
@@ -267,7 +267,7 @@ html.light .css-liquid-glass {
 }
 
 .css-liquid-glass__frost {
-  background: var(--lg-tint);
+  /* background: var(--lg-tint); */
   -webkit-backdrop-filter: blur(var(--lg-blur));
   backdrop-filter: blur(var(--lg-blur));
 }
@@ -344,7 +344,7 @@ html.light .css-liquid-glass {
 /* 减少透明 / 减少动效时降级为实底 */
 @media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
   .css-liquid-glass__frost {
-    background: hsl(var(--card));
+    /* background: hsl(var(--card)); */
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
