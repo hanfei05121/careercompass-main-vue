@@ -1,32 +1,40 @@
 <script setup lang="ts">
-import { watchEffect } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-
-const router = useRouter()
-const authStore = useAuthStore()
-
-// 根据登录态做入口分流：已登录 → 平台内部（Dashboard），未登录 → 登录页。
-// 用 watchEffect 而非 onMounted，避免登录态初始化（loading）晚于本组件挂载时卡在加载页。
-watchEffect(() => {
-  if (authStore.loading) return
-  if (authStore.isAuthenticated) {
-    if (authStore.isEmployer) {
-      router.replace('/employer/dashboard')
-    } else {
-      router.replace('/dashboard')
-    }
-  } else {
-    router.replace('/auth/login')
-  }
-})
+import NavBar from './index/components/NavBar.vue'
+import Hero from './index/components/Hero.vue'
+import AboutSection from './index/components/AboutSection.vue'
+import OpenSourceSection from './index/components/OpenSourceSection.vue'
+import SkillsSection from './index/components/SkillsSection.vue'
+import ArticleSection from './index/components/ArticleSection.vue'
+import TimelineSection from './index/components/TimelineSection.vue'
+import ContactSection from './index/components/ContactSection.vue'
 </script>
 
 <template>
-  <div class="flex h-screen w-full items-center justify-center bg-background">
-    <div class="flex flex-col items-center gap-4">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      <p class="text-muted-foreground">Loading CareerCompass...</p>
-    </div>
+  <div id="top" class="page">
+    <NavBar />
+
+    <main class="content">
+      <Hero />
+      <AboutSection />
+      <OpenSourceSection />
+      <SkillsSection />
+      <ArticleSection />
+      <TimelineSection />
+    </main>
+
+    <ContactSection />
   </div>
 </template>
+
+<style scoped>
+.page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+}
+</style>

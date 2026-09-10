@@ -28,3 +28,66 @@
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.08);
 }
+
+/* ============================================================
+ * 作品集版式工具类 —— 度量与参考站点 Karot 保持一致
+ * ========================================================== */
+
+/** 分区内边距：移动端 1rem / 6rem，桌面 2rem / 8rem */
+.section-pad {
+  padding-inline: 1rem;
+  padding-block: 6rem;
+}
+
+@media (min-width: 48rem) {
+  .section-pad {
+    padding-inline: 2rem;
+    padding-block: 8rem;
+  }
+}
+
+/** 眉标药丸：10px / 0.2em 字距，primary 18% 底色 */
+.eyebrow {
+  width: fit-content;
+  padding-inline: 0.75rem;
+  padding-block: 0.25rem;
+  border-radius: 9999px;
+  background: color-mix(in oklch, hsl(var(--primary)) 18%, transparent);
+  color: hsl(var(--primary));
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+/** 标题衬线字：Fraunces */
+.font-display {
+  font-family: 'Fraunces', 'Instrument Serif', ui-serif, Georgia, serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.font-display.tracking-tight {
+  letter-spacing: -0.04em;
+}
+
+/** 分区标题：移动端 text-3xl，桌面 text-5xl */
+.section-title {
+  margin-top: 1rem;
+  font-size: 1.875rem;
+  line-height: 1.2;
+}
+
+@media (min-width: 48rem) {
+  .section-title {
+    font-size: 3rem;
+    line-height: 1;
+  }
+}
+
+/** 锚点分区：为悬浮导航预留滚动偏移 */
+.scroll-anchor {
+  scroll-margin-top: 6rem;
+}

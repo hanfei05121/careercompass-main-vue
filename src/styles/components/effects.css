@@ -1,0 +1,391 @@
+/**
+ * 交互特效样式 —— 逐条对齐参考站点 Karot 的实现
+ * 1) 启动遮罩（boot loader）
+ * 2) 光标聚光卡片（card-spotlight-glow）
+ * 3) 液态玻璃 —— 位移滤镜版（LiquidGlass.vue）
+ * 4) 纯 CSS 液态玻璃容器（css-liquid-glass）
+ * 5) 主题切换的圆形揭示过渡（view-transition）
+ */
+
+/* ============================================================
+ * 1) 启动遮罩
+ * ========================================================== */
+
+html.booting::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background-color: #1a1520;
+  pointer-events: none;
+}
+
+html.light.booting::after {
+  background-color: #f7dce6;
+}
+
+html.booting:has([data-theme-burn='loader'])::after {
+  content: none;
+}
+
+/* 遮罩期间隐藏应用主体，避免内容在遮罩背后先播放入场动画 */
+html.booting #app {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+[data-theme-burn='loader'] {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background-color: #1a1520;
+  color: #f4eef2;
+}
+
+html.light [data-theme-burn='loader'] {
+  background-color: #f7dce6;
+  color: #1a1520;
+}
+
+[data-theme-burn='loader'] .boot-loader-panel {
+  position: relative;
+  z-index: 10;
+  height: 24rem;
+}
+
+[data-theme-burn='loader'] .boot-loader-list {
+  position: relative;
+  margin: 10rem auto 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 36rem;
+  width: 100%;
+  padding: 0 1.25rem;
+}
+
+[data-theme-burn='loader'] .boot-loader-spin {
+  color: #e8a4b8;
+}
+
+@keyframes Karot-boot-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 行内旋转图标：参考站点用 Tailwind 的 animate-spin，这里等价实现 */
+[data-theme-burn='loader'] .boot-loader-spinner {
+  animation: Karot-boot-spin 1s linear infinite;
+}
+
+/* ---- 涟漪圆圈：启动遮罩背后的同心圆呼吸 ---- */
+
+.animate-ripple-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-width: 1px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  animation: Karot-ripple-effect 2s ease-in-out infinite;
+}
+
+@keyframes Karot-ripple-effect {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ripple-circle,
+  [data-theme-burn='loader'] .boot-loader-spinner {
+    animation: none;
+  }
+}
+
+/* ============================================================
+ * 2) 光标聚光卡片
+ * ========================================================== */
+
+.card-spotlight-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  background: radial-gradient(
+    circle var(--spot-size) at var(--spot-x, -999px) var(--spot-y, -999px),
+    var(--spot-color) 0,
+    transparent 70%
+  );
+  transition: opacity 0.5s;
+}
+
+.group:hover .card-spotlight-glow {
+  opacity: var(--spot-opacity, 0.55);
+}
+
+/* ============================================================
+ * 3) 液态玻璃 —— 位移滤镜版（LiquidGlass.vue）
+ * ========================================================== */
+
+.effect {
+  display: block;
+  background: color-mix(in oklch, hsl(var(--card)) calc(var(--frost, 0.05) * 100%), transparent);
+  box-shadow:
+    0 0 2px 1px color-mix(in oklch, hsl(var(--foreground)) 10%, transparent) inset,
+    0 0 10px 4px color-mix(in oklch, hsl(var(--foreground)) 6%, transparent) inset,
+    0 4px 16px var(--shadow-bloom),
+    0 8px 24px var(--shadow-bloom);
+}
+
+.effect,
+.slot-container {
+  position: relative;
+  width: 100%;
+  border-radius: inherit;
+}
+
+.slot-container {
+  z-index: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+.liquid-glass__filter {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 不支持 backdrop-filter: url() 的浏览器退回毛玻璃 */
+@supports not ((-webkit-backdrop-filter: url(#a)) or (backdrop-filter: url(#a))) {
+  .effect {
+    background: color-mix(in oklch, hsl(var(--card)) 55%, transparent);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    backdrop-filter: blur(24px) saturate(1.5);
+  }
+}
+
+/* 减少透明 / 减少动效时同样退回毛玻璃 */
+@media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
+  .effect {
+    background: color-mix(in oklch, hsl(var(--card)) 78%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    backdrop-filter: blur(20px) saturate(1.2);
+  }
+}
+
+/* ============================================================
+ * 4) 纯 CSS 液态玻璃容器
+ * ========================================================== */
+
+.css-liquid-glass {
+  --lg-tr: 30%;
+  --lg-tint: color-mix(in oklch, hsl(var(--card)) 58%, transparent);
+  --lg-border: #ffffff14;
+  --lg-highlight: #ffffff24;
+  --lg-highlight-soft: #ffffff0d;
+  --lg-inset-dark: #0000006b;
+  --lg-inner-edge: #0000007a;
+  --lg-specular: #ffffff12;
+  --lg-rim: #ffffff14;
+  --lg-brightness: 0.84;
+  --lg-contrast: 1.06;
+  --lg-blur: 4px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--lg-r, 28px);
+  box-shadow: 0 4px 8px var(--shadow-bloom);
+}
+
+html.light .css-liquid-glass {
+  --lg-tr: 26%;
+  --lg-tint: color-mix(in oklch, hsl(var(--card)) 42%, transparent);
+  --lg-border: #33333314;
+  --lg-highlight: #ffffff6b;
+  --lg-highlight-soft: #ffffff2e;
+  --lg-inset-dark: #00000047;
+  --lg-inner-edge: #00000052;
+  --lg-specular: #ffffff38;
+  --lg-rim: #ffffff1f;
+  --lg-brightness: 0.94;
+  --lg-contrast: 1.12;
+  --lg-blur: 2px;
+}
+
+.css-liquid-glass__media {
+  z-index: 0;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.css-liquid-glass--media {
+  isolation: auto;
+  --lg-inset-dark: transparent;
+  --lg-inner-edge: transparent;
+}
+
+.css-liquid-glass--media .css-liquid-glass__frost {
+  -webkit-backdrop-filter: none;
+}
+
+.css-liquid-glass--media .css-liquid-glass__chrome,
+.css-liquid-glass--media .css-liquid-glass__chrome::before,
+.css-liquid-glass--media .css-liquid-glass__chrome::after,
+.css-liquid-glass--media .css-liquid-glass__rim {
+  filter: none;
+}
+
+.css-liquid-glass--media .css-liquid-glass__chrome::before {
+  content: none;
+}
+
+.css-liquid-glass__frost,
+.css-liquid-glass__chrome {
+  z-index: 1;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.css-liquid-glass__frost {
+  background: var(--lg-tint);
+  -webkit-backdrop-filter: blur(var(--lg-blur));
+  backdrop-filter: blur(var(--lg-blur));
+}
+
+.css-liquid-glass__chrome {
+  border: 1px double var(--lg-border);
+  filter: brightness(var(--lg-brightness)) contrast(var(--lg-contrast));
+  box-shadow:
+    inset 2px -2px 1px -1px var(--lg-highlight),
+    inset -2px 2px 1px -1px var(--lg-highlight),
+    inset 6px -6px 1px -6px var(--lg-highlight-soft),
+    inset -6px 6px 1px -6px var(--lg-highlight-soft),
+    inset 0 0 2px var(--lg-inset-dark);
+  overflow: hidden;
+}
+
+.css-liquid-glass__chrome::before {
+  content: '';
+  z-index: 1;
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  width: calc(100% - 16px);
+  height: calc(100% - 16px);
+  transform: translate(-50%);
+  border: 1px solid var(--lg-inner-edge);
+  border-radius: inherit;
+  filter: blur(8px);
+}
+
+.css-liquid-glass__chrome::after {
+  content: '';
+  z-index: 2;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  filter: blur(3px);
+  background: linear-gradient(
+    45deg,
+    var(--lg-specular) 0,
+    transparent var(--lg-tr),
+    transparent calc(100% - var(--lg-tr)),
+    var(--lg-specular) 100%
+  );
+}
+
+.css-liquid-glass__rim {
+  z-index: 3;
+  position: absolute;
+  inset: 4.5px;
+  border: 1px solid var(--lg-rim);
+  border-radius: inherit;
+  filter: blur(1px);
+}
+
+.css-liquid-glass__slot {
+  z-index: 2;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+  clip-path: inset(0 round var(--lg-r, 28px));
+}
+
+.css-liquid-glass--media .css-liquid-glass__slot {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  clip-path: none;
+  overflow: visible;
+}
+
+/* 减少透明 / 减少动效时降级为实底 */
+@media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
+  .css-liquid-glass__frost {
+    background: hsl(var(--card));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .css-liquid-glass__chrome {
+    filter: none;
+  }
+}
+
+/* ============================================================
+ * 5) 主题切换的圆形揭示过渡
+ * ========================================================== */
+
+::view-transition-old(root) {
+  mix-blend-mode: normal;
+  animation: none;
+}
+
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation: none;
+}
+
+html[data-theme-vt]::view-transition-group(root) {
+  animation-duration: var(--theme-toggle-vt-duration);
+}
+
+html[data-theme-vt='expand']::view-transition-old(root) {
+  z-index: 1;
+}
+
+html[data-theme-vt='expand']::view-transition-new(root) {
+  z-index: 2147483646;
+  clip-path: var(--theme-vt-clip-from);
+}
+
+html[data-theme-vt='collapse']::view-transition-old(root) {
+  z-index: 2147483646;
+  clip-path: var(--theme-vt-clip-from);
+}
+
+html[data-theme-vt='collapse']::view-transition-new(root) {
+  z-index: 1;
+}

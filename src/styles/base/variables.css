@@ -1,48 +1,71 @@
 /**
  * 设计变量：与 tailwind.config.ts 中的 shadcn 色板保持一致
  * 修改颜色时需同步 tailwind.config.ts 的 colors 映射
+ *
+ * 复现 Karot 作品集：深紫近黑背景 + 粉紫点缀的液态玻璃主题。
+ * 默认暗色（:root），浅色挂在 html.light 上，与参考站点一致，
+ * 因此主题切换只需在 <html> 上增删 light / dark 类名。
  */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --destructive: 0 84.2% 60.2%;
+  color-scheme: dark;
+
+  --background: 266 24% 10%; /* #1a1520 近黑深紫 */
+  --foreground: 330 32% 95%; /* 近白微粉 */
+  --card: 260 20% 17%;
+  --card-foreground: 330 32% 95%;
+  --popover: 260 20% 17%;
+  --popover-foreground: 330 32% 95%;
+  --primary: 335 76% 80%; /* 粉紫点缀，对齐参考站点 oklch(82% .1 350) */
+  --primary-foreground: 266 24% 10%;
+  --secondary: 260 16% 22%;
+  --secondary-foreground: 330 32% 95%;
+  --muted: 260 16% 22%;
+  --muted-foreground: 262 14% 70%;
+  --accent: 332 26% 20%;
+  --accent-foreground: 330 40% 96%;
+  --destructive: 0 70% 55%;
   --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 10% 3.9%;
-  --radius: 0.75rem;
+  --border: 266 14% 30%;
+  --input: 266 14% 30%;
+  --ring: 335 58% 72%;
+
+  --radius: 0.9rem;
+
+  /* ---- 氛围 / 光晕令牌（液态玻璃与卡片阴影依赖）---- */
+  --surface-glow: 335 60% 60% / 0.25;
+  --hero-tint: 330 45% 45% / 0.3;
+  --bloom-warm: 330 50% 50% / 0.22;
+  --panel-deep: 330 30% 8%;
+  /* 完整颜色值（非 HSL 分量），供 box-shadow / radial-gradient 直接使用 */
+  --shadow-bloom: rgb(0 0 0 / 0.35);
 }
 
-.dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
+html.light {
+  color-scheme: light;
+
+  --background: 338 63% 92%; /* #f7dce6 */
+  --foreground: 348 26% 20%;
+  --card: 347 100% 98%;
+  --card-foreground: 348 26% 20%;
+  --popover: 340 100% 99%;
+  --popover-foreground: 348 26% 20%;
+  --primary: 325 58% 50%;
+  --primary-foreground: 345 100% 99%;
+  --secondary: 350 100% 94%;
+  --secondary-foreground: 349 27% 24%;
+  --muted: 349 100% 95%;
+  --muted-foreground: 350 15% 39%;
+  --accent: 348 100% 93%;
+  --accent-foreground: 348 32% 22%;
+  --destructive: 357 100% 45%;
   --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
+  --border: 351 69% 90%;
+  --input: 351 69% 90%;
+  --ring: 329 56% 62%;
+
+  --surface-glow: 340 70% 88% / 0.36;
+  --hero-tint: 338 70% 88% / 0.4;
+  --bloom-warm: 350 60% 92% / 0.3;
+  --panel-deep: 330 33% 22%;
+  --shadow-bloom: rgb(176 114 125 / 0.12);
 }

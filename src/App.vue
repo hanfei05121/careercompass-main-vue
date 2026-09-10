@@ -1,23 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { RouterView } from 'vue-router'
-import { ElConfigProvider } from 'element-plus'
-import enUsLocale from 'element-plus/es/locale/lang/en'
-import zhCnLocale from 'element-plus/es/locale/lang/zh-cn'
-import Toaster from '@/components/ui/toast.vue'
-import { currentLocale } from '@/locales'
+import { SilkBackground } from '@/components/canvas'
+import BootLoader from '@/components/common/BootLoader.vue'
+import { useTheme } from '@/composables/useTheme'
 
-/** Element Plus 组件库语言跟随站点语言切换 */
-const elementLocale = computed(() =>
-  currentLocale.value === 'zh-CN' ? zhCnLocale : enUsLocale
-)
+// 初始化配色模式（暗色 / 浅色），与 index.html 的首屏脚本保持一致
+useTheme()
 </script>
 
 <template>
-  <ElConfigProvider :locale="elementLocale">
-    <RouterView />
-    <Toaster />
-  </ElConfigProvider>
+  <SilkBackground />
+  <RouterView />
+  <BootLoader />
 </template>
 
 <style>
@@ -28,6 +22,6 @@ body {
   padding: 0;
 }
 #app {
-  height: 100%;
+  min-height: 100%;
 }
 </style>
