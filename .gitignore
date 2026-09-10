@@ -32,3 +32,6 @@ dist-ssr
 .eslintrc-auto-import.json
 src/types/auto-imports.d.ts
 src/types/components.d.ts
+
+# 本地临时产物（截图、调试与验收脚本输出等），不要提交
+.workbuddy/tmp/
