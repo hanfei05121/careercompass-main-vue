@@ -243,7 +243,11 @@ html.light .css-liquid-glass {
 }
 
 .css-liquid-glass--media .css-liquid-glass__frost {
+  /* 媒体变体：底色交给媒体层，玻璃只留描边与高光，
+     否则 --lg-tint 会把卡片里的特效蒙上一层灰 */
+  background: none;
   -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .css-liquid-glass--media .css-liquid-glass__chrome,

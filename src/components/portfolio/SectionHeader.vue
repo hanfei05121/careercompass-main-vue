@@ -32,7 +32,9 @@ defineSlots<{ desc?: () => VNodeChild }>()
 
 <style scoped>
 .section-head {
-  max-width: 42rem;
+  /* 标题可占满容器宽度（参考站点里「把工程判断，写成可安装的工具与 Skill」是单行），
+     只有描述文案收窄到 42rem，否则桌面端标题会被挤成两行 */
+  max-width: 56rem;
 }
 
 .section-desc {

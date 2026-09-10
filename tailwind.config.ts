@@ -13,8 +13,18 @@ export default {
         body: ["Sora", "Outfit", "sans-serif"],
         headline: ["Sora", "Outfit", "sans-serif"],
         code: ['"JetBrains Mono"', "monospace"],
-        /** 标题衬线字：对齐参考站点的 Fraunces */
-        display: ["Fraunces", '"Instrument Serif"', "ui-serif", "Georgia", "serif"],
+        /** 标题衬线字：对齐参考站点的 Fraunces；中文回落无衬线（Fraunces 无中文字形） */
+        display: [
+          "Fraunces",
+          '"Instrument Serif"',
+          "Sora",
+          "Outfit",
+          "ui-sans-serif",
+          "system-ui",
+          '"PingFang SC"',
+          '"Microsoft YaHei"',
+          "sans-serif",
+        ],
       },
       transitionTimingFunction: {
         /** 参考站点统一使用的缓动曲线 */

@@ -61,9 +61,20 @@
   line-height: 1.5;
 }
 
-/** 标题衬线字：Fraunces */
+/** 标题衬线字：Fraunces（仅拉丁），中文回落无衬线 ——
+    参考站点同理：Fraunces 没有中文字形，中文继续往后找，
+    落在 PingFang / 雅黑 这类无衬线体上，所以标题是「拉丁衬线 + 中文黑体」的混排 */
 .font-display {
-  font-family: 'Fraunces', 'Instrument Serif', ui-serif, Georgia, serif;
+  font-family:
+    'Fraunces',
+    'Instrument Serif',
+    'Sora',
+    'Outfit',
+    ui-sans-serif,
+    system-ui,
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
   font-optical-sizing: auto;
   font-weight: 600;
   letter-spacing: -0.02em;
