@@ -1,21 +1,15 @@
 <script setup lang="ts">
 /**
- * LightRibbons —— 卡片媒体层特效：水平俯视的「蜿蜒赛道 + 你追我赶的光粒」。
+ * LightRibbons —— LightSpeed 光速公路特效（复现 cerrda.github.io About 卡片）。
  *
- * 版式要求（对齐参考站点录屏）：
- * - 镜头是**俯视**的：机位在赛道正上方，始终水平地俯视整条赛道，
- *   只随弯道做很轻微的左右扭头（yaw）与极小的横向漂移，不做贴地飞行。
- * - 整条赛道**完整入画**：赛道两端都在卡片里，近端不会被卡片边缘整齐切掉。
- * - 粒子**稀疏**：几十颗，不是一片稠密的线；速度差异明显，快的能追上并超过慢的。
- *
- * 实现（three.js，单次 draw call）：
- * - 静态几何两类：3 条护栏线 + N 颗粒子（每颗是一小段带拖尾的管）。
- *   位置、速度、拖尾、配色、亮度全在顶点着色器里按时间解析求值 ——
- *   赛道在水平面内蜿蜒，形状带时间项，于是弯道会缓慢地从远到近「流」过去。
- * - 粒子沿赛道前进：sHead 随 t 递减，拖尾铺在 sHead 之后（更远处），
- *   片元沿拖尾做指数衰减 —— 就是录屏里那种「光点 + 残影」的高速线条。
- * - 快慢靠每颗粒子独立的 sp（0.5~1.9 倍速）：同一条道上跑，快的自然追上前面的慢车。
- * - 粗细细用世界坐标半径；两端亮度归零，粒子循环时看不出接缝。
+ * 第一人称视角沿湍流扭曲的公路前进：
+ * - 左右两条深色路面 + 中间隔离带（原站把车道线 mix 注释掉了，路面纯黑）
+ * - 两侧车灯光带（左侧远离 = 橙/紫暖色，右侧靠近 = 绿/蓝冷色），TubeGeometry 实例化
+ * - 左侧光柱（sticks）
+ * - turbulentDistortion 让整条公路在空间中蜿蜒，相机 lookAt 同步跟随
+ * - 雾效 + UnrealBloom + SMAA + OutputPass 后处理
+ * - 按住鼠标 / 触摸加速（FOV 90→150 + 速度倍增）
+ * - 离屏 / 隐藏 / 减少动效时暂停或只渲一帧
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useReducedMotion } from '@/composables/useReducedMotion'
@@ -23,373 +17,568 @@ import { useReducedMotion } from '@/composables/useReducedMotion'
 const hostRef = ref<HTMLDivElement | null>(null)
 const { reduced } = useReducedMotion()
 
-/** 赛道全长（世界单位） */
-const TRACK_LEN = 11.0
-/** 赛道中心线的横向振幅 */
-const BEND_A = 3.60
-const BEND_B = 1.05
-/** 赛道半宽：护栏铺在 ±RAIL_HALF，粒子跑在护栏以内 */
-const RAIL_HALF = 1.75
-/** 护栏线条数（左 / 中 / 右） */
-const RAIL_COUNT = 3
-/** 护栏采样段数 */
-const RAIL_SEG = 96
-/** 粒子数量（稀疏，看得清谁在超谁） */
-const PARTICLE_COUNT = 68
-/** 每颗粒子沿拖尾的采样段数 */
-const TRAIL_SEG = 6
-/** 管的截面边数 */
-const RING = 4
-/** 粒子基础速度（倍速区间 0.5~1.9） */
-const BASE_SPEED = 0.085
+/* ===================== 配置（对齐原站） ===================== */
+const OPTIONS = {
+  distortion: 'turbulentDistortion',
+  length: 400,
+  roadWidth: 10,
+  islandWidth: 2,
+  lanesPerRoad: 4,
+  fov: 90,
+  fovSpeedUp: 150,
+  speedUp: 2,
+  carLightsFade: 0.4,
+  totalSideLightSticks: 20,
+  lightPairsPerRoadWay: 40,
+  shoulderLinesWidthPercentage: 0.05,
+  brokenLinesWidthPercentage: 0.1,
+  brokenLinesLengthPercentage: 0.5,
+  lightStickWidth: [0.12, 0.5] as [number, number],
+  lightStickHeight: [1.3, 1.7] as [number, number],
+  movingAwaySpeed: [60, 80] as [number, number],
+  movingCloserSpeed: [-120, -160] as [number, number],
+  carLightsLength: [12, 80] as [number, number],
+  carLightsRadius: [0.05, 0.14] as [number, number],
+  carWidthPercentage: [0.3, 0.5] as [number, number],
+  carShiftX: [-0.8, 0.8] as [number, number],
+  carFloorSeparation: [0, 5] as [number, number],
+  colors: {
+    roadColor: 0x080808,
+    islandColor: 0x0a0a0a,
+    background: 0x000000,
+    shoulderLines: 0xffffff,
+    brokenLines: 0xffffff,
+    leftCars: [0xd85a3f, 0x6750a2, 0xc247ac],
+    rightCars: [0x03b343, 0x0e5ea5, 0x3245d5],
+    sticks: 0x03b343,
+  },
+  pixelRatio: 1.25,
+}
 
-const VERTEX_SHADER = /* glsl */ `
-  attribute float aKind;    // 0 = 护栏，1 = 粒子
-  attribute float aId;      // 护栏序号 / 粒子序号
-  attribute float aAlong;   // 0..1：护栏沿全长 / 粒子沿拖尾
-  attribute float aRing;
+/* ===================== 着色器 ===================== */
 
+// 湍流扭曲（turbulentDistortion）。注意：uTime 由引用方各自声明，避免重复声明
+const DISTORTION_GLSL = /* glsl */ `
+  uniform vec4 uFreq;
+  uniform vec4 uAmp;
+  #define PI 3.14159265358979
+  float nsin(float val){ return sin(val) * 0.5 + 0.5; }
+  float getDistortionX(float progress){
+    return (
+      cos(PI * progress * uFreq.r + uTime) * uAmp.r +
+      pow(cos(PI * progress * uFreq.g + uTime * (uFreq.g / uFreq.r)), 2.) * uAmp.g
+    );
+  }
+  float getDistortionY(float progress){
+    return (
+      -nsin(PI * progress * uFreq.b + uTime) * uAmp.b +
+      -pow(nsin(PI * progress * uFreq.a + uTime / (uFreq.b / uFreq.a)), 5.) * uAmp.a
+    );
+  }
+  vec3 getDistortion(float progress){
+    return vec3(
+      getDistortionX(progress) - getDistortionX(0.0125),
+      getDistortionY(progress) - getDistortionY(0.0125),
+      0.
+    );
+  }
+`
+
+// 路面顶点着色器
+const ROAD_VERTEX = /* glsl */ `
+  uniform float uTravelLength;
   uniform float uTime;
-  uniform float uSpeed;
-
-  varying vec3  vColor;
-  varying vec3  vNormal;
-  varying vec3  vView;
-  varying float vBright;
-
-  // 赛道中心线：水平面内蜿蜒，带时间项 → 弯道缓慢流过
-  vec3 trackCenter(float s, float t) {
-    float x = ${BEND_A.toFixed(2)} * sin(s * 0.46 + t * 0.30)
-            + ${BEND_B.toFixed(2)} * sin(s * 0.21 - t * 0.19);
-    return vec3(x, 0.07 * sin(s * 0.35 + t * 0.40), -s);
-  }
-
-  vec3 trackRight(float s, float t) {
-    float e = 0.05;
-    vec3 tangent = normalize(trackCenter(s + e, t) - trackCenter(s - e, t));
-    return normalize(cross(tangent, vec3(0.0, 1.0, 0.0)));
-  }
-
+  varying vec2 vUv;
+  ${DISTORTION_GLSL}
   void main() {
-    float t = uTime;
-    float isParticle = step(0.5, aKind);
-
-    // ---- 护栏：铺满整条赛道 ----
-    float railU = (aId - 1.0) * ${RAIL_HALF.toFixed(2)};
-    float railS = aAlong * ${TRACK_LEN.toFixed(2)};
-
-    // ---- 粒子：沿赛道前进，速度分档 → 你追我赶 ----
-    float seed = fract(aId * 0.6180339887);
-    float sp = 0.45 + 1.70 * fract(seed * 5.19);            // 0.45 ~ 2.15 倍速
-    float trailLen = 0.70 + 2.20 * sp;                       // 拖尾长度随速度变长
-    float headS = ${TRACK_LEN.toFixed(2)}
-                * fract(fract(seed * 9.31) + t * sp * ${BASE_SPEED.toFixed(3)} * uSpeed);
-    float partS = headS - aAlong * trailLen;                 // 拖尾落在身后（靠近镜头一侧）
-    float partU = (fract(seed * 3.77) * 2.0 - 1.0) * (${RAIL_HALF.toFixed(2)} - 0.12);
-
-    float s = mix(railS, partS, isParticle);
-    float u = mix(railU, partU, isParticle);
-    float along = isParticle * aAlong;
-
-    vec3 center = trackCenter(s, t);
-    vec3 right = trackRight(s, t);
-
-    // 世界坐标半径：粒子略粗、护栏细
-    float radius = mix(0.022, 0.055 + 0.030 * fract(seed * 4.71), isParticle);
-    vec3 nrm = vec3(cos(aRing), sin(aRing), 0.0);
-    vec3 pos = center + right * (u + nrm.x * radius) + vec3(0.0, nrm.y * radius, 0.0);
-
-    vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-    vNormal = normalize(normalMatrix * (right * nrm.x + vec3(0.0, nrm.y, 0.0)));
-    vView = -mv.xyz;
-
-    // ---- 配色：青 + 粉紫 ----
-    float pick = fract(seed * 6.31);
-    vec3 partColor = pick < 0.46
-      ? vec3(0.38, 0.95, 1.00)
-      : (pick < 0.80 ? vec3(1.00, 0.38, 0.88) : vec3(0.66, 0.48, 1.00));
-    vec3 railColor = vec3(0.72, 0.62, 1.00);
-    vColor = mix(railColor, partColor, isParticle);
-
-    // ---- 亮度 ----
-    // 护栏：整条淡淡的灯带，两端略收
-    float railFade = smoothstep(0.0, 0.06, aAlong) * (1.0 - smoothstep(0.90, 1.0, aAlong));
-    float railBright = 0.30 * railFade;
-    // 粒子：头部亮、拖尾指数衰减；赛道两端淡出，循环处看不出接缝
-    float head = exp(-along * 3.1);
-    float endFade = smoothstep(0.0, 0.9, s) * (1.0 - smoothstep(${(TRACK_LEN * 0.86).toFixed(2)}, ${TRACK_LEN.toFixed(2)}, s));
-    float partBright = head * endFade * (0.60 + 0.40 * fract(seed * 3.31));
-
-    vBright = mix(railBright, partBright, isParticle);
-
-    gl_Position = projectionMatrix * mv;
+    vec3 transformed = position.xyz;
+    vec3 distortion = getDistortion((transformed.y + uTravelLength / 2.) / uTravelLength);
+    transformed.x += distortion.x;
+    transformed.z += distortion.y;
+    transformed.y += -1. * distortion.z;
+    vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.);
+    gl_Position = projectionMatrix * mvPosition;
+    vUv = uv;
   }
 `
 
-const FRAGMENT_SHADER = /* glsl */ `
-  uniform float uOpacity;
-
-  varying vec3  vColor;
-  varying vec3  vNormal;
-  varying vec3  vView;
-  varying float vBright;
-
+// 路面片元（原站把车道线 mix 注释掉了，路面为纯色，视觉主体是车灯光带）
+const ROAD_FRAGMENT = /* glsl */ `
+  varying vec2 vUv;
+  uniform vec3 uColor;
   void main() {
-    float f = abs(dot(normalize(vNormal), normalize(vView)));
-    // 管芯亮、边缘柔，加色混合后就是发光灯带 / 光点
-    float radial = pow(f, 2.0) * 0.88 + pow(1.0 - f, 2.0) * 0.14;
-    float alpha = radial * vBright * uOpacity;
-    if (alpha < 0.004) discard;
-    gl_FragColor = vec4(vColor, alpha);
+    vec3 color = vec3(uColor);
+    gl_FragColor = vec4(color, 1.);
   }
 `
 
-let renderer: import('three').WebGLRenderer | null = null
-let scene: import('three').Scene | null = null
-let camera: import('three').PerspectiveCamera | null = null
-let material: import('three').ShaderMaterial | null = null
-let geometry: import('three').BufferGeometry | null = null
+// 车灯顶点着色器
+const CAR_LIGHTS_VERTEX = /* glsl */ `
+  attribute vec3 aOffset;
+  attribute vec3 aMetrics;
+  attribute vec3 aColor;
+  uniform float uTravelLength;
+  uniform float uTime;
+  varying vec2 vUv;
+  varying vec3 vColor;
+  ${DISTORTION_GLSL}
+  void main() {
+    vec3 transformed = position.xyz;
+    float radius = aMetrics.r;
+    float myLength = aMetrics.g;
+    float speed = aMetrics.b;
+    transformed.xy *= radius;
+    transformed.z *= myLength;
+    transformed.z += myLength - mod(uTime * speed + aOffset.z, uTravelLength);
+    transformed.xy += aOffset.xy;
+    float progress = abs(transformed.z / uTravelLength);
+    transformed.xyz += getDistortion(progress);
+    vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.);
+    gl_Position = projectionMatrix * mvPosition;
+    vUv = uv;
+    vColor = aColor;
+  }
+`
 
-let elapsed = 0
-let lastTime = 0
-let running = false
-let inViewport = true
-let width = 0
-let height = 0
+// 车灯片元（沿 x 渐隐）
+const CAR_LIGHTS_FRAGMENT = /* glsl */ `
+  varying vec3 vColor;
+  varying vec2 vUv;
+  uniform vec2 uFade;
+  void main() {
+    vec3 color = vec3(vColor);
+    float alpha = smoothstep(uFade.x, uFade.y, vUv.x);
+    gl_FragColor = vec4(color, alpha);
+    if (gl_FragColor.a < 0.0001) discard;
+  }
+`
+
+// 光柱顶点着色器
+const STICKS_VERTEX = /* glsl */ `
+  attribute float aOffset;
+  attribute vec3 aColor;
+  attribute vec2 aMetrics;
+  uniform float uTravelLength;
+  uniform float uTime;
+  varying vec3 vColor;
+  mat4 rotationY(float angle) {
+    return mat4(
+      cos(angle), 0., sin(angle), 0.,
+      0., 1., 0., 0.,
+      -sin(angle), 0., cos(angle), 0.,
+      0., 0., 0., 1.
+    );
+  }
+  ${DISTORTION_GLSL}
+  void main(){
+    vec3 transformed = position.xyz;
+    float width = aMetrics.x;
+    float height = aMetrics.y;
+    transformed.xy *= vec2(width, height);
+    float time = mod(uTime * 60. * 2. + aOffset, uTravelLength);
+    transformed = (rotationY(3.14159265 / 2.) * vec4(transformed, 1.)).xyz;
+    transformed.z += -uTravelLength + time;
+    float progress = abs(transformed.z / uTravelLength);
+    transformed.xyz += getDistortion(progress);
+    transformed.y += height / 2.;
+    transformed.x += -width / 2.;
+    vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.);
+    gl_Position = projectionMatrix * mvPosition;
+    vColor = aColor;
+  }
+`
+
+// 光柱片元
+const STICKS_FRAGMENT = /* glsl */ `
+  varying vec3 vColor;
+  void main(){
+    gl_FragColor = vec4(vec3(vColor), 1.);
+  }
+`
+
+/* ===================== 工具函数 ===================== */
+function randRange(range: [number, number]): number {
+  return Math.random() * (range[1] - range[0]) + range[0]
+}
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+function lerp(current: number, target: number, t: number, threshold = 0.001): number {
+  let delta = (target - current) * t
+  if (Math.abs(delta) < threshold) delta = target - current
+  return delta
+}
+
+/* ===================== 生命周期 ===================== */
+let disposed = false
+let rafId = 0
 let resizeObserver: ResizeObserver | null = null
 let intersectionObserver: IntersectionObserver | null = null
-
-/** 静态几何：3 条护栏 + N 颗粒子（每颗 TRAIL_SEG 段拖尾），合成一个 mesh */
-function buildGeometry(t: typeof import('three')) {
-  const railVerts = RAIL_COUNT * RAIL_SEG * RING
-  const partVerts = PARTICLE_COUNT * TRAIL_SEG * RING
-  const vertCount = railVerts + partVerts
-
-  const positions = new Float32Array(vertCount * 3)
-  const kindAttr = new Float32Array(vertCount)
-  const idAttr = new Float32Array(vertCount)
-  const alongAttr = new Float32Array(vertCount)
-  const ringAttr = new Float32Array(vertCount)
-
-  const railTris = RAIL_COUNT * (RAIL_SEG - 1) * RING * 6
-  const partTris = PARTICLE_COUNT * (TRAIL_SEG - 1) * RING * 6
-  const indices = new Uint32Array(railTris + partTris)
-
-  let v = 0
-  let i = 0
-
-  const emitSection = (
-    kind: number,
-    id: number,
-    along: number,
-  ) => {
-    for (let r = 0; r < RING; r += 1) {
-      kindAttr[v] = kind
-      idAttr[v] = id
-      alongAttr[v] = along
-      ringAttr[v] = (r / RING) * Math.PI * 2
-      v += 1
-    }
-  }
-  const emitQuads = (segs: number, base: number) => {
-    for (let k = 0; k < segs - 1; k += 1) {
-      for (let r = 0; r < RING; r += 1) {
-        const r2 = (r + 1) % RING
-        const a = base + k * RING + r
-        const b = base + k * RING + r2
-        const c = base + (k + 1) * RING + r
-        const d = base + (k + 1) * RING + r2
-        indices[i] = a
-        indices[i + 1] = c
-        indices[i + 2] = b
-        indices[i + 3] = b
-        indices[i + 4] = c
-        indices[i + 5] = d
-        i += 6
-      }
-    }
-  }
-
-  // 护栏
-  for (let l = 0; l < RAIL_COUNT; l += 1) {
-    const base = v
-    for (let k = 0; k < RAIL_SEG; k += 1) emitSection(0, l, k / (RAIL_SEG - 1))
-    emitQuads(RAIL_SEG, base)
-  }
-
-  // 粒子
-  for (let p = 0; p < PARTICLE_COUNT; p += 1) {
-    const base = v
-    for (let k = 0; k < TRAIL_SEG; k += 1) emitSection(1, p, k / (TRAIL_SEG - 1))
-    emitQuads(TRAIL_SEG, base)
-  }
-
-  const geo = new t.BufferGeometry()
-  geo.setAttribute('position', new t.BufferAttribute(positions, 3))
-  geo.setAttribute('aKind', new t.BufferAttribute(kindAttr, 1))
-  geo.setAttribute('aId', new t.BufferAttribute(idAttr, 1))
-  geo.setAttribute('aAlong', new t.BufferAttribute(alongAttr, 1))
-  geo.setAttribute('aRing', new t.BufferAttribute(ringAttr, 1))
-  geo.setIndex(new t.BufferAttribute(indices, 1))
-  geo.boundingSphere = new t.Sphere(new t.Vector3(0, 0, -TRACK_LEN / 2), TRACK_LEN * 2)
-  return geo
-}
-
-function applySize() {
-  const host = hostRef.value
-  if (!host || !renderer || !camera) return
-
-  const rect = host.getBoundingClientRect()
-  if (rect.width < 1 || rect.height < 1) return
-
-  width = rect.width
-  height = rect.height
-
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-  renderer.setSize(width, height, false)
-
-  // 改尺寸必须同步 aspect，否则画面被拉伸
-  camera.aspect = width / height
-  camera.updateProjectionMatrix()
-
-  if (!running) render(elapsed || 4)
-}
-
-function render(time: number) {
-  if (!renderer || !scene || !camera || !material) return
-
-  // 俯视机位：始终在赛道正上方水平俯视整条赛道；
-  // 只做「跟随弯道的轻微扭头 + 极小横移 + 缓慢推拉」，不贴地、不翻滚
-  const yaw = 0.085 * Math.sin(time * 0.21)
-  const height = 13.4 + 0.55 * Math.sin(time * 0.13)
-  const lookZ = -TRACK_LEN * 0.5
-
-  camera.position.set(Math.sin(time * 0.17) * 0.35, height, lookZ + 1.6)
-  camera.lookAt(Math.sin(time * 0.21) * 0.55, 0, lookZ)
-  camera.rotation.y += yaw
-
-  material.uniforms.uSpeed.value = 1 + 0.28 * Math.sin(time * 0.16)
-  material.uniforms.uTime.value = time
-  renderer.render(scene, camera)
-}
-
-function loop(timestamp: number) {
-  if (!running) return
-  const now = timestamp * 0.001
-  const delta = lastTime === 0 ? 0.016 : Math.min(now - lastTime, 0.05)
-  lastTime = now
-  elapsed += delta
-  render(elapsed)
-}
-
-function play() {
-  if (running || reduced.value || !renderer) return
-  running = true
-  lastTime = 0
-  renderer.setAnimationLoop(loop)
-}
-
-function pause() {
-  running = false
-  renderer?.setAnimationLoop(null)
-}
-
-function sync() {
-  if (inViewport && !document.hidden && !reduced.value) play()
-  else pause()
-}
+let inViewport = true
+let paused = false
 
 async function setup() {
-  const host = hostRef.value
-  if (!host) return
+  const hostMaybe = hostRef.value
+  if (!hostMaybe) return
+  // 显式标注非空类型，保证嵌套闭包（applySize 等）里 TS 收窄不丢失
+  const host: HTMLDivElement = hostMaybe
 
   try {
-    // 动态加载：three 单独成 chunk，不拖首屏
-    const mod = await import('three')
+    const THREE = await import('three')
+    // 用 three 自带的后处理（addons），避免新增 npm 依赖导致旧 dev server 缓存失效
+    const { EffectComposer } = await import('three/addons/postprocessing/EffectComposer.js')
+    const { RenderPass } = await import('three/addons/postprocessing/RenderPass.js')
+    const { UnrealBloomPass } = await import('three/addons/postprocessing/UnrealBloomPass.js')
+    const { SMAAPass } = await import('three/addons/postprocessing/SMAAPass.js')
+    const { OutputPass } = await import('three/addons/postprocessing/OutputPass.js')
 
-    renderer = new mod.WebGLRenderer({
-      alpha: true,
+    if (disposed) return
+
+    const opt = OPTIONS
+    const width = host.offsetWidth || 1
+    const height = host.offsetHeight || 1
+
+    // ---- 渲染器 ----
+    const renderer = new THREE.WebGLRenderer({
       antialias: false,
+      alpha: true,
       powerPreference: 'high-performance',
+      stencil: false,
     })
-    renderer.setClearAlpha(0)
-    renderer.domElement.classList.add('light-ribbons__canvas')
+    renderer.setSize(width, height, false)
+    renderer.setPixelRatio(Math.min(opt.pixelRatio, window.devicePixelRatio || 1))
+    renderer.domElement.style.width = '100%'
+    renderer.domElement.style.height = '100%'
+    renderer.domElement.style.display = 'block'
     host.appendChild(renderer.domElement)
 
-    scene = new mod.Scene()
-    camera = new mod.PerspectiveCamera(52, 1, 0.1, 80)
-    camera.position.set(0, 13.4, -TRACK_LEN * 0.5 + 1.6)
-    camera.lookAt(0, 0, -TRACK_LEN * 0.5)
+    // ---- 场景 & 相机 ----
+    const scene = new THREE.Scene()
+    scene.background = null
+    const fog = new THREE.Fog(new THREE.Color(opt.colors.background), opt.length * 0.2, opt.length * 500)
+    scene.fog = fog
 
-    geometry = buildGeometry(mod)
-    material = new mod.ShaderMaterial({
-      vertexShader: VERTEX_SHADER,
-      fragmentShader: FRAGMENT_SHADER,
-      uniforms: {
-        uTime: { value: 0 },
-        uSpeed: { value: 1 },
-        uOpacity: { value: 0.95 },
-      },
-      transparent: true,
-      blending: mod.AdditiveBlending,
-      depthTest: false,
-      depthWrite: false,
-    })
+    const camera = new THREE.PerspectiveCamera(opt.fov, width / height, 0.1, 10000)
+    camera.position.set(0, 8, -5)
 
-    const mesh = new mod.Mesh(geometry, material)
-    mesh.frustumCulled = false
-    scene.add(mesh)
+    // ---- 后处理：Bloom（发光）+ SMAA（抗锯齿），对齐原站 ----
+    const composer = new EffectComposer(renderer)
+    const renderPass = new RenderPass(scene, camera)
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 1.0, 0.0, 0.2)
+    const smaaPass = new SMAAPass(
+      width * renderer.getPixelRatio(),
+      height * renderer.getPixelRatio(),
+    )
+    composer.addPass(renderPass)
+    composer.addPass(bloomPass)
+    composer.addPass(smaaPass)
+    // 最后做 sRGB / tone mapping 转换，否则画面发灰发暗
+    composer.addPass(new OutputPass())
 
-    applySize()
-
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(() => applySize())
-      resizeObserver.observe(host)
+    // ---- 扭曲 uniforms ----
+    const distortionUniforms = {
+      uFreq: { value: new THREE.Vector4(4, 8, 8, 1) },
+      uAmp: { value: new THREE.Vector4(25, 5, 10, 10) },
+      uTime: { value: 0 },
     }
-    if (typeof IntersectionObserver !== 'undefined') {
-      intersectionObserver = new IntersectionObserver(
-        (entries) => {
-          inViewport = entries[0]?.isIntersecting ?? true
-          sync()
+
+    // ---- 路面 ----
+    function createRoadPlane(xDir: number, isRoad: boolean) {
+      const planeWidth = isRoad ? opt.roadWidth : opt.islandWidth
+      const geo = new THREE.PlaneGeometry(planeWidth, opt.length, 20, 100)
+      const uniforms: Record<string, { value: unknown }> = {
+        uTravelLength: { value: opt.length },
+        uColor: { value: new THREE.Color(isRoad ? opt.colors.roadColor : opt.colors.islandColor) },
+        ...distortionUniforms,
+      }
+      const mat = new THREE.ShaderMaterial({
+        vertexShader: ROAD_VERTEX,
+        fragmentShader: ROAD_FRAGMENT,
+        side: THREE.DoubleSide,
+        uniforms,
+      })
+      const mesh = new THREE.Mesh(geo, mat)
+      mesh.rotation.x = -Math.PI / 2
+      mesh.position.z = -opt.length / 2
+      mesh.position.x += (opt.islandWidth / 2 + opt.roadWidth / 2) * xDir
+      scene.add(mesh)
+      return mesh
+    }
+    createRoadPlane(-1, true)
+    createRoadPlane(1, true)
+    createRoadPlane(0, false)
+
+    // ---- 车灯 ----
+    function createCarLights(
+      colors: number[],
+      speedRange: [number, number],
+      fade: [number, number],
+    ) {
+      // 原站用 TubeGeometry（沿 z 轴的单位管），着色器里按 aMetrics 缩放
+      const curve = new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1))
+      const tubeGeo = new THREE.TubeGeometry(curve, 40, 1, 8, false)
+      const geo = new THREE.InstancedBufferGeometry()
+      geo.index = tubeGeo.index
+      geo.attributes.position = tubeGeo.attributes.position
+      geo.attributes.uv = tubeGeo.attributes.uv
+      geo.instanceCount = opt.lightPairsPerRoadWay * 2
+
+      const laneWidth = opt.roadWidth / opt.lanesPerRoad
+      const offsets: number[] = []
+      const metrics: number[] = []
+      const colorsArr: number[] = []
+
+      for (let i = 0; i < opt.lightPairsPerRoadWay; i++) {
+        const radius = randRange(opt.carLightsRadius)
+        const carLen = randRange(opt.carLightsLength)
+        const speed = randRange(speedRange)
+        const lane = (i % opt.lanesPerRoad) * laneWidth - opt.roadWidth / 2 + laneWidth / 2
+        const carWidth = randRange(opt.carWidthPercentage) * laneWidth
+        const shift = randRange(opt.carShiftX) * laneWidth
+        const x = lane + shift
+        const y = randRange(opt.carFloorSeparation) + radius * 1.3
+        const z = -randRange([0, opt.length] as [number, number])
+
+        // 两个灯（左右）
+        offsets.push(x - carWidth / 2, y, z, x + carWidth / 2, y, z)
+        metrics.push(radius, carLen, speed, radius, carLen, speed)
+        const c = new THREE.Color(pick(colors))
+        colorsArr.push(c.r, c.g, c.b, c.r, c.g, c.b)
+      }
+
+      geo.setAttribute('aOffset', new THREE.InstancedBufferAttribute(new Float32Array(offsets), 3))
+      geo.setAttribute('aMetrics', new THREE.InstancedBufferAttribute(new Float32Array(metrics), 3))
+      geo.setAttribute('aColor', new THREE.InstancedBufferAttribute(new Float32Array(colorsArr), 3))
+
+      const mat = new THREE.ShaderMaterial({
+        vertexShader: CAR_LIGHTS_VERTEX,
+        fragmentShader: CAR_LIGHTS_FRAGMENT,
+        transparent: true,
+        uniforms: {
+          uTravelLength: { value: opt.length },
+          uFade: { value: new THREE.Vector2(...fade) },
+          ...distortionUniforms,
         },
-        { rootMargin: '80px' },
-      )
-      intersectionObserver.observe(host)
+      })
+
+      const mesh = new THREE.Mesh(geo, mat)
+      mesh.frustumCulled = false
+      scene.add(mesh)
+      return mesh
     }
 
-    // 减少动效：只渲染一帧静态画面
+    const leftLights = createCarLights(opt.colors.leftCars, opt.movingAwaySpeed, [0, 1 - opt.carLightsFade])
+    leftLights.position.setX(-opt.roadWidth / 2 - opt.islandWidth / 2)
+    const rightLights = createCarLights(opt.colors.rightCars, opt.movingCloserSpeed, [1, 0 + opt.carLightsFade])
+    rightLights.position.setX(opt.roadWidth / 2 + opt.islandWidth / 2)
+
+    // ---- 光柱 ----
+    function createSticks() {
+      const baseGeo = new THREE.PlaneGeometry(1, 1)
+      const geo = new THREE.InstancedBufferGeometry()
+      geo.index = baseGeo.index
+      geo.attributes.position = baseGeo.attributes.position
+      geo.attributes.uv = baseGeo.attributes.uv
+      geo.instanceCount = opt.totalSideLightSticks
+
+      const spacing = opt.length / (opt.totalSideLightSticks - 1)
+      const offsets: number[] = []
+      const colorsArr: number[] = []
+      const metricsArr: number[] = []
+      const stickColor = new THREE.Color(opt.colors.sticks)
+
+      for (let i = 0; i < opt.totalSideLightSticks; i++) {
+        offsets.push((i - 1) * spacing * 2 + spacing * Math.random())
+        colorsArr.push(stickColor.r, stickColor.g, stickColor.b)
+        metricsArr.push(randRange(opt.lightStickWidth), randRange(opt.lightStickHeight))
+      }
+
+      geo.setAttribute('aOffset', new THREE.InstancedBufferAttribute(new Float32Array(offsets), 1))
+      geo.setAttribute('aColor', new THREE.InstancedBufferAttribute(new Float32Array(colorsArr), 3))
+      geo.setAttribute('aMetrics', new THREE.InstancedBufferAttribute(new Float32Array(metricsArr), 2))
+
+      const mat = new THREE.ShaderMaterial({
+        vertexShader: STICKS_VERTEX,
+        fragmentShader: STICKS_FRAGMENT,
+        side: THREE.DoubleSide,
+        uniforms: {
+          uTravelLength: { value: opt.length },
+          ...distortionUniforms,
+        },
+      })
+
+      const mesh = new THREE.Mesh(geo, mat)
+      mesh.frustumCulled = false
+      scene.add(mesh)
+      return mesh
+    }
+    const sticks = createSticks()
+    sticks.position.setX(-(opt.roadWidth + opt.islandWidth / 2))
+
+    // ---- 交互：按住加速 ----
+    let fovTarget = opt.fov
+    let speedUpTarget = 0
+    let speedUp = 0
+    let timeOffset = 0
+
+    function onPointerDown() {
+      fovTarget = opt.fovSpeedUp
+      speedUpTarget = opt.speedUp
+    }
+    function onPointerUp() {
+      fovTarget = opt.fov
+      speedUpTarget = 0
+    }
+    host.addEventListener('mousedown', onPointerDown)
+    host.addEventListener('mouseup', onPointerUp)
+    host.addEventListener('mouseleave', onPointerUp)
+    host.addEventListener('touchstart', onPointerDown, { passive: true })
+    host.addEventListener('touchend', onPointerUp)
+
+    // ---- 动画循环 ----
+    const clock = new THREE.Clock()
+    const lookAtTarget = new THREE.Vector3()
+
+    // turbulentDistortion 的 JS 版本（用于相机 lookAt）
+    function getDistortionJS(progress: number, time: number) {
+      const freq = distortionUniforms.uFreq.value
+      const amp = distortionUniforms.uAmp.value
+      const nsin = (v: number) => Math.sin(v) * 0.5 + 0.5
+      const getX = (p: number) =>
+        Math.cos(Math.PI * p * freq.x + time) * amp.x +
+        Math.cos(Math.PI * p * freq.y + time * (freq.y / freq.x)) ** 2 * amp.y
+      const getY = (p: number) =>
+        -nsin(Math.PI * p * freq.z + time) * amp.z -
+        nsin(Math.PI * p * freq.w + time / (freq.z / freq.w)) ** 5 * amp.w
+      return new THREE.Vector3(
+        (getX(progress) - getX(progress + 0.007)) * -2,
+        (getY(progress) - getY(progress + 0.007)) * -5,
+        -10,
+      )
+    }
+
+    function update(delta: number) {
+      const t = Math.exp(-(-60 * Math.log2(0.9)) * delta)
+      speedUp += lerp(speedUp, speedUpTarget, t, 0.00001)
+      timeOffset += speedUp * delta
+      const time = clock.elapsedTime + timeOffset
+
+      // 更新 uniforms（所有材质共享同一个 distortionUniforms.uTime 引用）
+      distortionUniforms.uTime.value = time
+
+      // 相机 FOV
+      const fovDelta = lerp(camera.fov, fovTarget, t)
+      if (fovDelta !== 0) {
+        camera.fov += fovDelta * delta * 6
+        camera.updateProjectionMatrix()
+      }
+
+      // 相机 lookAt 跟随扭曲
+      const lookOffset = getDistortionJS(0.025, time)
+      lookAtTarget.set(
+        camera.position.x + lookOffset.x,
+        camera.position.y + lookOffset.y,
+        camera.position.z + lookOffset.z,
+      )
+      camera.lookAt(lookAtTarget)
+    }
+
+    function tick() {
+      if (disposed || paused) return
+      const delta = clock.getDelta()
+      update(delta)
+      composer.render(delta)
+      rafId = requestAnimationFrame(tick)
+    }
+
+    // ---- 尺寸自适应 ----
+    function applySize() {
+      const w = host.offsetWidth
+      const h = host.offsetHeight
+      if (w < 1 || h < 1) return
+      renderer.setSize(w, h, false)
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
+      composer.setSize(w, h)
+    }
+
+    resizeObserver = new ResizeObserver(() => applySize())
+    resizeObserver.observe(host)
+
+    intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        inViewport = entries[0]?.isIntersecting ?? true
+        syncPlay()
+      },
+      { rootMargin: '80px' },
+    )
+    intersectionObserver.observe(host)
+
+    function syncPlay() {
+      if (inViewport && !document.hidden && !reduced.value && !disposed) {
+        if (paused) {
+          paused = false
+          clock.start()
+          tick()
+        }
+      } else {
+        paused = true
+        clock.stop()
+        if (rafId) {
+          cancelAnimationFrame(rafId)
+          rafId = 0
+        }
+      }
+    }
+
+    // 减少动效：只渲染一帧
     if (reduced.value) {
-      elapsed = 4
-      render(elapsed)
+      update(0.016)
+      composer.render(0.016)
       return
     }
-    sync()
+
+    applySize()
+    tick()
+
+    // ---- 清理函数挂到外部 ----
+    cleanupFn = () => {
+      disposed = true
+      paused = true
+      if (rafId) cancelAnimationFrame(rafId)
+      host.removeEventListener('mousedown', onPointerDown)
+      host.removeEventListener('mouseup', onPointerUp)
+      host.removeEventListener('mouseleave', onPointerUp)
+      host.removeEventListener('touchstart', onPointerDown)
+      host.removeEventListener('touchend', onPointerUp)
+      resizeObserver?.disconnect()
+      intersectionObserver?.disconnect()
+      composer.dispose()
+      renderer.dispose()
+      renderer.domElement.remove()
+      scene.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry.dispose()
+          if (Array.isArray(obj.material)) obj.material.forEach((m) => m.dispose())
+          else obj.material.dispose()
+        }
+      })
+    }
   } catch (error) {
-    // WebGL 不可用等：静默降级，卡片靠玻璃层与底色照样显示
     console.warn('[LightRibbons] WebGL 初始化失败，降级为静态卡片：', error)
   }
 }
+
+let cleanupFn: (() => void) | null = null
 
 onMounted(() => {
   void setup()
 })
 
 onBeforeUnmount(() => {
-  pause()
-  resizeObserver?.disconnect()
-  resizeObserver = null
-  intersectionObserver?.disconnect()
-  intersectionObserver = null
-
-  geometry?.dispose()
-  geometry = null
-  material?.dispose()
-  material = null
-  renderer?.dispose()
-  renderer?.domElement.remove()
-  renderer = null
-  scene = null
-  camera = null
+  disposed = true
+  cleanupFn?.()
+  cleanupFn = null
 })
 </script>
 
@@ -402,15 +591,8 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  cursor: pointer;
   /* 兜底：WebGL 不可用时卡片也不能是空白 */
-  background:
-    radial-gradient(120% 90% at 50% 40%, rgb(74 28 86 / 0.30), transparent 66%),
-    linear-gradient(160deg, rgb(20 12 28 / 0.5), rgb(8 6 14 / 0.66));
-}
-
-.light-ribbons :deep(.light-ribbons__canvas) {
-  display: block;
-  width: 100%;
-  height: 100%;
+  background: linear-gradient(160deg, rgb(12 8 20 / 0.9), rgb(4 2 8 / 0.95));
 }
 </style>
