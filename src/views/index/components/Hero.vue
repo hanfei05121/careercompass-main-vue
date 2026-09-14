@@ -6,7 +6,7 @@
  * 右侧是由粒子构成的字形（鼠标进入散开、移出复原）。
  * 首屏内容等启动遮罩结束后由 BlurReveal 错峰入场。
  */
-import { BlurReveal, MorphingText, ParticleGlyph } from '@/components/portfolio'
+import { BlurReveal, ParticleGlyph, RoleRotator } from '@/components/portfolio'
 import InteractiveHoverButton from '@/components/ui/interactive-hover-button.vue'
 
 /** 形变轮播的职位文案，对齐参考站点 */
@@ -28,12 +28,7 @@ const GLYPH = '韩'
           <h1 class="hero-name font-display">Karot</h1>
         </BlurReveal>
 
-        <div class="hero-roles">
-          <MorphingText
-            :texts="ROLES"
-            class="!mx-0 !h-12 !max-w-full !text-left !text-2xl !leading-tight md:!h-14 md:!text-3xl lg:!text-3xl"
-          />
-        </div>
+        <RoleRotator :texts="ROLES" class="mt-5" />
 
         <BlurReveal mode="ready" :delay="0.28" :duration="1">
           <p class="hero-intro">
@@ -111,13 +106,6 @@ const GLYPH = '韩'
   line-height: 0.95;
   letter-spacing: -0.04em;
   color: hsl(var(--foreground));
-}
-
-.hero-roles {
-  position: relative;
-  margin-top: 1.25rem;
-  max-width: 36rem;
-  overflow: hidden;
 }
 
 .hero-intro {

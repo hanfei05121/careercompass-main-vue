@@ -66,41 +66,7 @@ const pillars = [
 </template>
 
 <style scoped>
-/* ---- 左列：玻璃媒体卡的文案层 ---- */
-.media-caption {
-  position: relative;
-  display: flex;
-  height: 100%;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 0.25rem;
-  padding: 1.5rem;
-}
-
-/* 底部压暗，保证光缆再亮也压得住文字 */
-.media-caption::before {
-  content: '';
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 55%;
-  pointer-events: none;
-  background: linear-gradient(to top, rgb(10 6 16 / 0.62), rgb(10 6 16 / 0.2) 45%, transparent);
-}
-
-.media-caption__title {
-  position: relative;
-  font-size: 1.125rem;
-  line-height: 1.3;
-  color: hsl(var(--foreground));
-}
-
-.media-caption__desc {
-  position: relative;
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: hsl(var(--muted-foreground));
-}
+/* media-caption 系列样式已提升为全局类，见 src/styles/components/effects.css 第 7 节 */
 
 /* ---- 右列：三条竖排要点 ---- */
 .pillars {

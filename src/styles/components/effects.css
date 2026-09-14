@@ -5,6 +5,8 @@
  * 3) 液态玻璃 —— 位移滤镜版（LiquidGlass.vue）
  * 4) 纯 CSS 液态玻璃容器（css-liquid-glass）
  * 5) 主题切换的圆形揭示过渡（view-transition）
+ * 6) 通用玻璃面板（glass-panel）—— 导航同款，纯 CSS，任意元素加类即可复用
+ * 7) 媒体卡文案层（media-caption）—— 玻璃媒体卡底部的标题 / 副标题
  */
 
 /* ============================================================
@@ -392,4 +394,76 @@ html[data-theme-vt='collapse']::view-transition-old(root) {
 
 html[data-theme-vt='collapse']::view-transition-new(root) {
   z-index: 1;
+}
+
+/* ============================================================
+ * 6) 通用玻璃面板 glass-panel
+ *    导航药丸同款观感的纯 CSS 版：半透明底色 + 背景模糊 + 内描边高光 + 外投影。
+ *    任意元素加 `class="glass-panel"` 即可复用，通过 CSS 变量微调：
+ *      --glass-radius  圆角（默认 16px，药丸传 999px）
+ *      --glass-frost   底色不透明度 0~1（默认 0.1，越大越"实"）
+ *      --glass-blur    背景模糊半径（默认 12px）
+ *    位移折射版（边缘弯曲）仍需用 <LiquidGlass> 组件，见第 3 节。
+ * ========================================================== */
+
+.glass-panel {
+  background: color-mix(in oklch, hsl(var(--card)) calc(var(--glass-frost, 0.1) * 100%), transparent);
+  border-radius: var(--glass-radius, 16px);
+  -webkit-backdrop-filter: blur(var(--glass-blur, 12px)) saturate(1.4);
+  backdrop-filter: blur(var(--glass-blur, 12px)) saturate(1.4);
+  box-shadow:
+    0 0 2px 1px color-mix(in oklch, hsl(var(--foreground)) 10%, transparent) inset,
+    0 0 10px 4px color-mix(in oklch, hsl(var(--foreground)) 6%, transparent) inset,
+    0 4px 16px var(--shadow-bloom),
+    0 8px 24px var(--shadow-bloom);
+}
+
+/* 减少透明 / 减少动效时退回较实的底色，去掉模糊 */
+@media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
+  .glass-panel {
+    background: color-mix(in oklch, hsl(var(--card)) 78%, transparent);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* ============================================================
+ * 7) 媒体卡文案层 media-caption
+ *    叠在 <CssLiquidGlass> 的 #media 内容之上，把标题 / 副标题压到左下角，
+ *    底部自带一层压暗渐变，保证背景特效再亮也压得住文字。
+ *    结构约定：.media-caption > .media-caption__title + .media-caption__desc
+ * ========================================================== */
+
+.media-caption {
+  position: relative;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  padding: 1.5rem;
+}
+
+.media-caption::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 55%;
+  pointer-events: none;
+  background: linear-gradient(to top, rgb(10 6 16 / 0.62), rgb(10 6 16 / 0.2) 45%, transparent);
+}
+
+.media-caption__title {
+  position: relative;
+  font-size: 1.125rem;
+  line-height: 1.3;
+  color: hsl(var(--foreground));
+}
+
+.media-caption__desc {
+  position: relative;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
 }

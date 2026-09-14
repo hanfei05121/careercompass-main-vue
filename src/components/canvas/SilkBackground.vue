@@ -1,19 +1,50 @@
 <script setup lang="ts">
 /**
- * SilkBackground —— 丝绸 WebGL2 背景。
+ * SilkBackground —— 丝绸 WebGL2 背景（可全局或局部复用）。
  *
  * 逐条对齐参考站点：
  * - 着色器：`silkShader.ts`（ShaderToy X3yXRd，MIT）
- * - 参数：hue 300 / saturation .5 / brightness 1 / speed 1
  * - 性能档位：GPU 较弱、核心数 ≤ 4 或 DPR ≥ 3 时降到 0.3 渲染倍率 / 24fps，否则 0.4 / 30fps
- * - 外层容器：`fixed inset-0 z-0`，透明度浅色 0.36 / 暗色 0.55
- *   （深色丝绸叠在浅粉底上就成了浅色丝绒，两个主题共用同一套 shader）
  * - 生命周期：页面不可见或不在视口内时暂停；减少动效时只画一帧
+ *
+ * 复用方式：
+ * - 默认作为整页背景：`<SilkBackground />`（fixed 全屏，叠在内容之下）
+ * - 放进卡片 / 分区里：`<SilkBackground :fill="false" hue="210" :speed="0.6" />`，
+ *   外层容器需要 `position: relative` 且有自身高度，组件会 absolute 铺满
+ * - 配色与动效通过 props 调整（hue / saturation / brightness / speed / opacity）
  */
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useReducedMotion } from '@/composables/useReducedMotion'
 import { useSiteReady } from '@/composables/useSiteReady'
 import { SILK_FRAGMENT_SHADER, SILK_VERTEX_SHADER } from './silkShader'
+
+const props = withDefaults(
+  defineProps<{
+    /** 色相 0~360（默认 300 紫红，与首页一致） */
+    hue?: number
+    /** 饱和度 0~1 */
+    saturation?: number
+    /** 明度 0~1 */
+    brightness?: number
+    /** 流动速度倍率 */
+    speed?: number
+    /** 暗色主题下的整体透明度 */
+    opacity?: number
+    /** 浅色主题下的整体透明度 */
+    lightOpacity?: number
+    /** true = fixed 全屏铺底（默认）；false = absolute 填满最近的定位父级 */
+    fill?: boolean
+  }>(),
+  {
+    hue: 300,
+    saturation: 0.5,
+    brightness: 1,
+    speed: 1,
+    opacity: 0.55,
+    lightOpacity: 0.36,
+    fill: true,
+  },
+)
 
 /** 参考站点的两档 GPU 配置 */
 const NORMAL_PROFILE = { pixelRatio: 0.4, frameRate: 30 }
@@ -48,6 +79,7 @@ function detectProfile() {
 }
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
+const hostRef = ref<HTMLDivElement | null>(null)
 const { reduced } = useReducedMotion()
 const { markSilkReady } = useSiteReady()
 
@@ -70,8 +102,21 @@ let pageVisible = true
 const resolution = new Float32Array([1, 1, 1])
 const mouse = new Float32Array([0, 0, 0, 0])
 const date = new Float32Array([0, 0, 0, 0])
-const hsv = new Float32Array([300, 0.5, 1])
-const speed = 1
+const hsv = new Float32Array([props.hue, props.saturation, props.brightness])
+
+/** 把当前 props 写入 HSV uniform（speed 在 draw 时实时读取） */
+function syncHsv() {
+  if (!gl || !uniforms.iHSV) return
+  hsv[0] = props.hue
+  hsv[1] = props.saturation
+  hsv[2] = props.brightness
+  gl.uniform3fv(uniforms.iHSV, hsv)
+}
+
+const layerStyle = computed(() => ({
+  '--silk-opacity-dark': `${props.opacity}`,
+  '--silk-opacity-light': `${props.lightOpacity}`,
+}))
 
 function compileShader(type: number, source: string) {
   if (!gl) return null
@@ -147,7 +192,7 @@ function init() {
   gl.disable(gl.BLEND)
   gl.uniform3fv(uniforms.iResolution!, resolution)
   gl.uniform3fv(uniforms.iHSV!, hsv)
-  gl.uniform1f(uniforms.iSpeed!, speed)
+  gl.uniform1f(uniforms.iSpeed!, props.speed)
   gl.uniform1f(uniforms.iFrameRate!, targetFPS)
   gl.uniform1f(uniforms.iTime!, 0)
   gl.uniform1f(uniforms.iTimeDelta!, 0)
@@ -160,10 +205,13 @@ function init() {
 
 function resize() {
   const canvas = canvasRef.value
-  if (!gl || !canvas) return
+  const host = hostRef.value
+  if (!gl || !canvas || !host) return
 
-  const w = Math.max(1, window.innerWidth)
-  const h = Math.max(1, window.innerHeight)
+  // 按宿主元素实际尺寸测量：fixed 全屏时即视口，嵌入卡片时即卡片大小
+  const rect = host.getBoundingClientRect()
+  const w = Math.max(1, Math.round(rect.width))
+  const h = Math.max(1, Math.round(rect.height))
   const nextW = Math.floor(w * pixelRatio)
   const nextH = Math.floor(h * pixelRatio)
   if (canvas.width === nextW && canvas.height === nextH) return
@@ -187,8 +235,8 @@ function draw() {
   const now = playing ? performance.now() : prevDrawTime
   if (firstDrawTime === 0) firstDrawTime = now
 
-  const delta = (now - prevDrawTime) * 0.001 * speed
-  const elapsed = (now - firstDrawTime) * 0.001 * speed
+  const delta = (now - prevDrawTime) * 0.001 * props.speed
+  const elapsed = (now - firstDrawTime) * 0.001 * props.speed
 
   date[3] = now * 0.001
 
@@ -265,6 +313,7 @@ function onVisibility() {
 }
 
 let intersectionObserver: IntersectionObserver | null = null
+let hostResizeObserver: ResizeObserver | null = null
 
 onMounted(() => {
   const profile = detectProfile()
@@ -293,6 +342,12 @@ onMounted(() => {
   )
   if (canvasRef.value) intersectionObserver.observe(canvasRef.value)
 
+  // 监听宿主尺寸变化：fixed 全屏时跟随窗口，嵌入卡片时跟随容器
+  if (hostRef.value) {
+    hostResizeObserver = new ResizeObserver(() => onResize())
+    hostResizeObserver.observe(hostRef.value)
+  }
+
   document.addEventListener('visibilitychange', onVisibility)
   window.addEventListener('resize', onResize)
 
@@ -301,11 +356,28 @@ onMounted(() => {
 
 watch(reduced, () => sync())
 
+// 配色 / 速度 props 变化时实时写回 uniform
+watch(
+  () => [props.hue, props.saturation, props.brightness],
+  () => {
+    syncHsv()
+    if (!playing) draw()
+  },
+)
+watch(
+  () => props.speed,
+  (v) => {
+    if (gl && uniforms.iSpeed) gl.uniform1f(uniforms.iSpeed, v)
+  },
+)
+
 onBeforeUnmount(() => {
   pause()
   if (resizeRaf) cancelAnimationFrame(resizeRaf)
   intersectionObserver?.disconnect()
   intersectionObserver = null
+  hostResizeObserver?.disconnect()
+  hostResizeObserver = null
   document.removeEventListener('visibilitychange', onVisibility)
   window.removeEventListener('resize', onResize)
   if (gl && program) gl.deleteProgram(program)
@@ -315,8 +387,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="silk-layer opacity-[0.36] dark:opacity-[0.55]" aria-hidden="true">
-    <div class="silk-host">
+  <div class="silk-layer" :class="{ 'silk-layer--local': !fill }" :style="layerStyle" aria-hidden="true">
+    <div ref="hostRef" class="silk-host">
       <canvas ref="canvasRef" class="silk-canvas" />
     </div>
   </div>
@@ -328,8 +400,17 @@ onBeforeUnmount(() => {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  /* 透明度由模板上的 opacity-[0.36] dark:opacity-[0.55] 控制：
+  /* 透明度由 props 驱动：暗色 --silk-opacity-dark / 浅色 --silk-opacity-light，
      深色丝绸叠在浅粉底上就是浅色丝绒，两个主题共用同一套 shader */
+  opacity: var(--silk-opacity-dark, 0.55);
+}
+
+.silk-layer--local {
+  position: absolute;
+}
+
+html.light .silk-layer {
+  opacity: var(--silk-opacity-light, 0.36);
 }
 
 .silk-host {
