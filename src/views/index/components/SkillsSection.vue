@@ -3,20 +3,18 @@ import { BlurReveal, CssLiquidGlass, SectionHeader } from '@/components/portfoli
 
 const skills = [
   {
-    name: 'faker-mock-setup',
+    name: '中后台页面范式',
     index: '01',
-    desc: '按 OpenAPI 或函数名生成页面级 Faker overrideResponse Mock，把前端联调从口头约定变成可安装、可复用的 Agent 工作流。',
-    points: ['由函数名或 URL 推导 ApiId', '生成页面级 setup{ApiId}MockHandler', '面向 Vue / Vite + MSW 联调'],
-    install: 'npx skills add https://github.com/Karot/skills --skill faker-mock-setup',
-    href: 'https://skills.sh/Karot/skills/faker-mock-setup',
+    desc: '把「搜索区 + ProTable + 操作弹窗」沉淀为配置驱动的页面范式：列表列、表单项、操作按钮全部声明式配置，一个 hook 接管请求、分页与刷新。',
+    points: ['config-list-hook / config-form-hook 声明式配置', '字典与 LOV 数据驱动渲染', '按钮级权限码统一挂载'],
+    install: 'ProTable + useDict + useAuthorize',
   },
   {
-    name: 'scrapling-config-crawl',
+    name: 'H5 交互与实时通信',
     index: '02',
-    desc: '按 config.py 的 id 生成 scrapling 采集脚本，将增量写入、翻页校验与合规边界固化为可安装 Skill。仅面向依法公开数据。',
-    points: ['list / data 增量写入与附件分流', '强制复用项目 utils，避免脚本各自为政', '仅面向依法公开数据'],
-    install: 'npx skills add https://github.com/Karot/skills --skill scrapling-config-crawl',
-    href: 'https://skills.sh/Karot/skills/scrapling-config-crawl',
+    desc: '移动端社区的一整套交互资产：可拖拽悬浮球、下拉刷新 + 无限加载、contenteditable 富文本发帖，以及 WebSocket 直播间的弹幕与红包雨。',
+    points: ['useLoadMore 分页加载与刷新', 'useDraggableFab 可拖拽悬浮球', 'WebSocket 断线重连与消息分发'],
+    install: 'Vant + vue3-danmaku + WebSocket',
   },
 ]
 </script>
@@ -25,18 +23,9 @@ const skills = [
   <section id="skills" class="section-pad scroll-anchor">
     <div class="mx-auto max-w-6xl">
       <BlurReveal :delay="0.05">
-        <SectionHeader eyebrow="Agent Skills" title="上架 skills.sh 的工程化 Skill">
-          <template #desc>把 Mock 联调与配置驱动采集写成可安装、可版本化的 Agent 工作流，含触发条件、硬性规则与合规边界。</template>
+        <SectionHeader eyebrow="Skills" title="沉淀下来的可复用能力">
+          <template #desc>三个项目里反复出现的模式，最终都收敛成了 hooks、组件与配置范式，新页面接入只需声明数据。</template>
         </SectionHeader>
-
-        <a
-          class="profile-link"
-          href="https://skills.sh/Karot"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          skills.sh<wbr />/Karot
-        </a>
       </BlurReveal>
 
       <div class="grid">
@@ -49,14 +38,12 @@ const skills = [
           <CssLiquidGlass class="h-full rounded-[1.75rem]" container-class="h-full rounded-[1.75rem]">
             <article class="skill-body">
               <div class="skill-index-row">
-                <span class="skill-source">skills.sh</span>
+                <span class="skill-source">复用资产</span>
                 <span class="skill-index">{{ s.index }}</span>
               </div>
 
               <h3 class="skill-name">
-                <a :href="s.href" target="_blank" rel="noopener noreferrer" class="skill-name-link">
-                  {{ s.name }}
-                </a>
+                {{ s.name }}
               </h3>
 
               <p class="skill-desc">{{ s.desc }}</p>
@@ -78,23 +65,6 @@ const skills = [
 </template>
 
 <style scoped>
-.profile-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin-top: 1.25rem;
-  padding: 0.45rem 1rem;
-  border-radius: 9999px;
-  border: 0.8px solid color-mix(in oklch, hsl(var(--primary)) 25%, transparent);
-  color: hsl(var(--primary));
-  font-weight: 600;
-  transition: border-color 0.4s ease;
-}
-
-.profile-link:hover {
-  border-color: hsl(var(--ring) / 0.5);
-}
-
 .grid {
   margin-top: 2.5rem;
   display: grid;
@@ -134,22 +104,7 @@ const skills = [
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
-  word-break: break-all;
-}
-
-.skill-name-link {
   color: hsl(var(--foreground));
-  text-decoration: underline;
-  text-decoration-color: color-mix(in oklch, hsl(var(--primary)) 35%, transparent);
-  text-underline-offset: 4px;
-  transition:
-    color 0.3s ease,
-    text-decoration-color 0.3s ease;
-}
-
-.skill-name-link:hover {
-  color: hsl(var(--primary));
-  text-decoration-color: hsl(var(--primary));
 }
 
 .skill-desc {

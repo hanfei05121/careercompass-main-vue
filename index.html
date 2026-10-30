@@ -9,25 +9,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#1a1520" />
-    <meta name="description" content="Frontend · Agent · DX —— 把工程判断，写成可安装的工具与 Skill。" />
+    <meta name="description" content="Vue 3 前端工程师 · 中后台业务系统 · 社区与直播 H5 · 工程化与联调提效" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <title>Karot · Frontend · Agent</title>
+    <title>韩 · Frontend · Vue</title>
     <script>
       /* 主题提前落地：避免刷新时闪白，与参考站点 Karot 的启动脚本一致。 */
       ;(function () {
         try {
           var el = document.documentElement
           el.classList.add('booting')
-          var p = localStorage.getItem('Karot-color-mode')
+          var p = localStorage.getItem('site-color-mode')
           if (p !== 'light' && p !== 'dark') {
             p = 'dark'
             try {
-              localStorage.setItem('Karot-color-mode', 'dark')
+              localStorage.setItem('site-color-mode', 'dark')
             } catch (e) {}
           }
           var isDark = p !== 'light'

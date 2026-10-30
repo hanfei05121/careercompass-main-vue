@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Hero —— 首屏。
- * 版式对齐参考站点：`lg:grid-cols-[1.15fr_0.85fr]` 左文右图，
+ * `lg:grid-cols-[1.15fr_0.85fr]` 左文右图：
  * 左侧眉标药丸 + Fraunces 大标题 + 形变轮播的职位文案 + 简介 + 两个交互按钮，
  * 右侧是由粒子构成的字形（鼠标进入散开、移出复原）。
  * 首屏内容等启动遮罩结束后由 BlurReveal 错峰入场。
@@ -9,10 +9,10 @@
 import { BlurReveal, ParticleGlyph, RoleRotator } from '@/components/portfolio'
 import InteractiveHoverButton from '@/components/ui/interactive-hover-button.vue'
 
-/** 形变轮播的职位文案，对齐参考站点 */
-const ROLES = ['Frontend Engineer', 'Agent Infrastructure', 'Open Source Author', 'Vue / Nuxt Engineer']
+/** 形变轮播的职位文案 */
+const ROLES = ['Vue 3 前端工程师', '中后台业务系统', '社区 / 直播 H5', '工程化与联调提效']
 
-/** 粒子字形，暂以「韩」占位 */
+/** 粒子字形：姓氏「韩」 */
 const GLYPH = '韩'
 </script>
 
@@ -21,25 +21,25 @@ const GLYPH = '韩'
     <div class="hero-grid">
       <div class="hero-copy">
         <BlurReveal mode="ready" :delay="0.08" :duration="0.9">
-          <p class="eyebrow">Frontend · Agent · DX</p>
+          <p class="eyebrow">Vue · 中后台 · H5 · 工程化</p>
         </BlurReveal>
 
         <BlurReveal mode="ready" :delay="0.16" :duration="0.95">
-          <h1 class="hero-name font-display">Karot</h1>
+          <h1 class="hero-name font-display">韩</h1>
         </BlurReveal>
 
         <RoleRotator :texts="ROLES" class="mt-5" />
 
         <BlurReveal mode="ready" :delay="0.28" :duration="1">
           <p class="hero-intro">
-            发布 Vite 插件与可安装 Agent Skill。把类型同步、Mock 联调和采集流程做成可复用的工程基础设施。
+            今年先后交付应收管理中后台、企业社区论坛（H5 + PC）与外包资源管理平台三套系统。擅长把重复的表格、表单、联调流程沉淀成可复用的组件与工具，让业务页面写得更少、跑得更稳。
           </p>
         </BlurReveal>
 
         <BlurReveal mode="ready" :delay="0.36" :duration="1">
           <div class="hero-actions">
-            <a href="#open-source" class="hero-link">
-              <InteractiveHoverButton text="查看开源" />
+            <a href="#projects" class="hero-link">
+              <InteractiveHoverButton text="看看项目" />
             </a>
             <a href="#writing" class="hero-link">
               <InteractiveHoverButton

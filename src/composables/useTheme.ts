@@ -1,9 +1,9 @@
 import { computed, ref } from 'vue'
 
-/** 站点配色模式，默认暗色（与参考站点 Karot 一致） */
+/** 站点配色模式，默认暗色 */
 export type ColorMode = 'dark' | 'light'
 
-const STORAGE_KEY = 'Karot-color-mode'
+const STORAGE_KEY = 'site-color-mode'
 
 /** 品牌底色：与 index.html 的首屏启动脚本保持一致，避免切换时闪色 */
 const SHELL_BG: Record<ColorMode, string> = {

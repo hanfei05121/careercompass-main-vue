@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { appEnv } from '@/config'
 
 /**
- * 复现 Karot 作品集站点：单页落地（/）+ 文章详情（/articles/:slug）。
+ * 个人介绍站点：单页落地（/）+ 文章详情（/articles/:slug）。
  * 站点完全公开，无需鉴权守卫。
  */
 const router = createRouter({
@@ -12,7 +12,7 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: () => import('@/views/index.vue'),
-      meta: { title: '把工程判断，写成可安装的工具与 Skill' },
+      meta: { title: 'Vue 前端工程师 · 项目与实践' },
     },
     {
       path: '/articles/:slug',
@@ -34,7 +34,7 @@ const router = createRouter({
 })
 
 router.afterEach((to) => {
-  const base = 'Karot · Frontend · Agent'
+  const base = '韩 · Frontend · Vue'
   document.title = to.meta.title ? `${to.meta.title} · ${base}` : base
 })
 

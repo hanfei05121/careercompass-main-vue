@@ -5,42 +5,30 @@ const contacts = [
   {
     id: 'email',
     label: '邮箱',
-    value: 'hello@Karot.dev',
-    href: 'mailto:hello@Karot.dev',
+    value: '待补充',
     hint: '项目合作与深度技术交流',
   },
   {
     id: 'github',
     label: 'GitHub',
-    value: 'github.com/Karot',
-    href: 'https://github.com/Karot',
-    hint: '开源仓库、Vite 插件与 Skill',
+    value: '待补充',
+    hint: '开源仓库与个人项目',
   },
   {
-    id: 'juejin',
-    label: '掘金',
-    value: 'juejin.cn',
-    href: 'https://juejin.cn',
-    hint: '工程实践与工具设计记录',
-  },
-  {
-    id: 'skills',
-    label: 'skills.sh',
-    value: 'skills.sh/Karot',
-    href: 'https://skills.sh/Karot',
-    hint: '已上架的可安装 Agent Skill',
+    id: 'resume',
+    label: '简历',
+    value: '可提供',
+    hint: '详细项目经历与技术栈说明',
   },
 ]
-
-const isExternal = (href: string) => href.startsWith('http')
 </script>
 
 <template>
   <footer id="contact" class="footer section-pad scroll-anchor">
     <div class="mx-auto max-w-6xl">
       <BlurReveal :delay="0.05">
-        <SectionHeader eyebrow="Connect" title="开源合作与技术交流">
-          <template #desc>前端工程化、Agent Skill 与开源工具链。邮箱直接联系，仓库与 Skill 可公开查阅。</template>
+        <SectionHeader eyebrow="Connect" title="项目合作与技术交流">
+          <template #desc>前端工程化、中后台系统与 H5 交互。详细项目经历可提供简历。</template>
         </SectionHeader>
       </BlurReveal>
 
@@ -54,32 +42,27 @@ const isExternal = (href: string) => href.startsWith('http')
               <p class="contact-eyebrow">Contact</p>
               <h3 class="contact-title font-display">联系方式</h3>
               <p class="contact-hint">
-                邮箱用于项目合作与技术交流。开源仓库、文章与可安装 Skill 分别在 GitHub、掘金与 skills.sh。
+                欢迎就前端工程化、中后台系统与 H5 交互交流合作。联系方式整理中，可先通过项目合作渠道沟通。
               </p>
             </div>
 
             <ul class="contact-list">
               <li v-for="c in contacts" :key="c.id">
-                <a
-                  class="contact-row"
-                  :href="c.href"
-                  :target="isExternal(c.href) ? '_blank' : undefined"
-                  :rel="isExternal(c.href) ? 'noopener noreferrer' : undefined"
-                >
+                <div class="contact-row">
                   <span class="contact-row-label">
                     <span class="dot" aria-hidden="true" />
                     {{ c.label }}
                   </span>
                   <span class="contact-row-value">{{ c.value }}</span>
                   <span class="contact-row-hint">{{ c.hint }}</span>
-                </a>
+                </div>
               </li>
             </ul>
           </div>
         </CssLiquidGlass>
       </BlurReveal>
 
-      <p class="copy">© {{ new Date().getFullYear() }} Karot · Frontend · Agent · DX</p>
+      <p class="copy">© {{ new Date().getFullYear() }} 韩 · Frontend · Vue · 中后台 · H5</p>
     </div>
   </footer>
 </template>
@@ -160,14 +143,6 @@ const isExternal = (href: string) => href.startsWith('http')
   padding: 0.875rem 1rem;
   border-radius: 1rem;
   border: 1px solid transparent;
-  transition:
-    background-color 0.5s cubic-bezier(0.32, 0.72, 0, 1),
-    border-color 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.contact-row:hover {
-  background: color-mix(in oklch, hsl(var(--accent)) 60%, transparent);
-  border-color: color-mix(in oklch, hsl(var(--primary)) 25%, transparent);
 }
 
 .contact-row-label {

@@ -4,7 +4,8 @@
  *
  * 第一人称视角沿湍流扭曲的公路前进：
  * - 左右两条深色路面 + 中间隔离带（原站把车道线 mix 注释掉了，路面纯黑）
- * - 两侧车灯光带（左侧远离 = 橙/紫暖色，右侧靠近 = 绿/蓝冷色），TubeGeometry 实例化
+ * - 两侧车灯光带（左侧橙/紫暖色，右侧绿/蓝冷色），TubeGeometry 实例化
+ *   两侧光带同为「远离」方向，与路面、光柱一起向前飞驰
  * - 左侧光柱（sticks）
  * - turbulentDistortion 让整条公路在空间中蜿蜒，相机 lookAt 同步跟随
  * - 雾效 + UnrealBloom + SMAA + OutputPass 后处理
@@ -36,7 +37,7 @@ const OPTIONS = {
   lightStickWidth: [0.12, 0.5] as [number, number],
   lightStickHeight: [1.3, 1.7] as [number, number],
   movingAwaySpeed: [60, 80] as [number, number],
-  movingCloserSpeed: [-120, -160] as [number, number],
+  movingCloserSpeed: [60, 80] as [number, number],
   carLightsLength: [12, 80] as [number, number],
   carLightsRadius: [0.05, 0.14] as [number, number],
   carWidthPercentage: [0.3, 0.5] as [number, number],
@@ -369,7 +370,8 @@ async function setup() {
 
     const leftLights = createCarLights(opt.colors.leftCars, opt.movingAwaySpeed, [0, 1 - opt.carLightsFade])
     leftLights.position.setX(-opt.roadWidth / 2 - opt.islandWidth / 2)
-    const rightLights = createCarLights(opt.colors.rightCars, opt.movingCloserSpeed, [1, 0 + opt.carLightsFade])
+    // 右侧光带：与左侧同为「远离」方向（速度为正），视觉上与整体一起向前飞驰
+    const rightLights = createCarLights(opt.colors.rightCars, opt.movingAwaySpeed, [1, 0 + opt.carLightsFade])
     rightLights.position.setX(opt.roadWidth / 2 + opt.islandWidth / 2)
 
     // ---- 光柱 ----

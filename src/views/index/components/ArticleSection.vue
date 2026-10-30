@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * ArticleSection —— 文章列表。
- * 版式对齐参考站点：标题行右侧为文章总数，列表每行是一张聚光卡片，
+ * 标题行右侧为文章总数，列表每行是一张聚光卡片，
  * 序号用 Fraunces 大号字、tags 用 primary 12% 药丸、日期用等宽字，
  * 行内标题在 hover 时转为 primary，其余内容轻微淡入。
  */
@@ -16,7 +16,7 @@ import { RouterLink } from 'vue-router'
       <BlurReveal :blur="0" :y-offset="16" :delay="0.05">
         <div class="writing-head">
           <SectionHeader eyebrow="Writing" title="文章">
-            <template #desc>工程实践记录。覆盖 Vue 指令体系、中后台性能、图标工具链，以及 Agent Skill 的设计与上架。</template>
+            <template #desc>项目实践记录。覆盖中后台权限与表格范式、H5 富文本与直播互动、验证码与字典组件设计。</template>
           </SectionHeader>
           <p class="writing-count font-display">{{ ARTICLES.length }}</p>
         </div>

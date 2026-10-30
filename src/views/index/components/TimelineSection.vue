@@ -4,23 +4,18 @@ import { BlurReveal, SectionHeader } from '@/components/portfolio'
 const milestones = [
   {
     year: '2026',
-    title: 'Agent 工作流上架 skills.sh',
-    desc: '发布 faker-mock-setup 与 scrapling-config-crawl，把团队 Mock 联调与配置驱动采集封装为可安装 Skill。将触发条件、硬性规则、模板与合规边界写成 Agent 可执行、可版本化的工作流。',
+    title: '应收账款管理系统',
+    desc: '基于公司脚手架（Vue 3 + Element Plus + 权限服务）交付应收中后台：收款条款登记、里程碑树形表格、客户回款跟踪，以及 OnlyOffice + pdf.js 的合同双栏比对与差异高亮。',
   },
   {
-    year: '2025',
-    title: '类型系统与工程工具链',
-    desc: '发布并维护 vite-plugin-fetch-dts，在 Vite 构建期为远程 Vue / Web Components 补齐完整 TypeScript 体验。同时把 Vue 指令体系与 UnoCSS 图标热更新做成可复用工具链。',
+    year: '2026',
+    title: 'tpdtalk 社区论坛（H5 + PC）',
+    desc: '企业内部社区双端开发。H5 端用 Vant + rem 适配完成发帖、话题、圈子等模块，直播间用 WebSocket 打通弹幕、红包雨与抽奖；PC 端同步开发论坛与后台管理。沉淀 useLoadMore、useDraggableFab 等通用 hooks。',
   },
   {
-    year: '2024',
-    title: '同时面向人与 Agent 的抽象',
-    desc: '以类型系统、开发者体验与中后台性能为轴，开始把可复用能力同时写成给人读的工具，以及给 Agent 执行的上下文。',
-  },
-  {
-    year: '2023',
-    title: '中后台交互原语',
-    desc: '在 Vue 3 中后台交付中，将溢出提示、一键复制、自适应导航等高频交互抽成指令与组件。按需创建 Tooltip，拿掉表格页里成批无效实例，形成第一层可复用的交互语言。',
+    year: '2026',
+    title: '外包资源管理平台',
+    desc: '供应商、专家、简历、结算一体的外包管理系统。基于 Ant Design Vue 搭建 MultiTab 多页签布局，接入 OAuth2 单点登录，自研滑动 / 旋转 / 点选 / 拼接四类行为验证码，并把全站字典做成数据驱动的 Dict 组件族。',
   },
 ]
 </script>
@@ -28,14 +23,14 @@ const milestones = [
 <template>
   <section id="trajectory" class="section-pad scroll-anchor">
     <div class="mx-auto max-w-6xl">
-      <SectionHeader eyebrow="轨迹" title="轨迹">
-        <template #desc>从 Vue 指令与中后台性能，到 Vite 插件、OpenAPI 工具链，以及上架 skills.sh 的可安装 Agent Skill。</template>
+      <SectionHeader eyebrow="轨迹" title="今年的项目轨迹">
+        <template #desc>从应收管理中后台，到社区论坛双端，再到外包资源管理平台——三套系统，一套可复用的前端范式。</template>
       </SectionHeader>
 
       <ol class="timeline">
         <BlurReveal
           v-for="(m, i) in milestones"
-          :key="m.year"
+          :key="m.title"
           :delay="Math.min(i * 0.08, 0.2)"
           :amount="0.15"
           class="ti-wrap"

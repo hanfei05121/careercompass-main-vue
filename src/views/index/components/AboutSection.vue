@@ -2,28 +2,26 @@
 /**
  * AboutSection —— 关于我。
  *
- * 版式对齐参考站点：`mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]`
+ * `mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]`
  * - 左列：CssLiquidGlass 的 --media 变体，玻璃卡片里放三维光缆特效（LightRibbons），
  *   左下角压标题 / 副标题。卡片自身用 aspect-ratio 定高：
- *   媒体层是 absolute 定位，不给定高的话卡片会被内容撑成 0 高（这正是「放进卡片
- *   什么也看不见」的根因），移动端单列时尤其明显。
+ *   媒体层是 absolute 定位，不给定高的话卡片会被内容撑成 0 高，移动端单列时尤其明显。
  * - 右列：三条竖排要点。左侧一条 primary 竖线自上而下渐隐，首条挂一个圆点。
- *   标题用无衬线（参考图里「前端工程」是等线宽黑体），衬线只留给卡片里的拉丁文案。
  */
 import { BlurReveal, CssLiquidGlass, LightRibbons, SectionHeader } from '@/components/portfolio'
 
 const pillars = [
   {
-    title: '前端工程',
-    desc: 'Vue 自定义指令、UnoCSS 图标热更新、Vite 远程类型插件与 OpenAPI 请求生成。把中后台里反复出现的摩擦，收敛成一次配置、长期复用的工具链。',
+    title: '中后台业务系统',
+    desc: '应收管理、外包资源管理这类重表单、重表格的系统：动态路由 + 按钮级权限码、字典 / LOV 数据驱动渲染、ProTable 配置化列表，把上百个业务页面收敛成一套可复用的页面范式。',
   },
   {
-    title: 'Agent 基础设施',
-    desc: 'Skill 不是 README 的另一种写法，而是可版本化的约束与流程：触发条件、硬性规则、assets 模板与合规边界，上架 skills.sh 后安装即可执行。',
+    title: '社区与直播 H5',
+    desc: '企业社区论坛的移动端：发帖富文本、WebSocket 直播弹幕、红包雨 / 抽奖互动、可拖拽悬浮球。在 Vant + rem 适配的约束下，把交互体验做到与原生 App 一致。',
   },
   {
     title: '交付原则',
-    desc: '先把问题抽象成工具，再把边界写清楚：它解决什么，以及明确不解决什么。',
+    desc: '先抽公共组件和 hooks，再写业务页面；联调先定数据契约。重复出现三次的逻辑，一定值得被收敛成一次配置、长期复用的工具。',
   },
 ]
 </script>
@@ -31,10 +29,9 @@ const pillars = [
 <template>
   <section id="about" class="section-pad scroll-anchor">
     <div class="mx-auto max-w-6xl">
-      <SectionHeader eyebrow="About" title="把工程判断，写成可安装的工具与 Skill">
+      <SectionHeader eyebrow="About" title="把业务系统里重复的部分，收敛成可复用的前端资产">
         <template #desc>
-          Vue / Nuxt 方向前端工程师，工作重心在工程化、开发者体验与 Agent 工作流。已发布 vite-plugin-fetch-dts
-          等 npm 包，并在 skills.sh 上架可安装 Skill，把远程类型同步、Mock 联调与配置驱动采集固化为可版本化工具。
+          Vue 3 + TypeScript 前端工程师。今年先后在应收管理中后台、企业社区论坛（H5 / PC 双端）与外包资源管理平台三个项目中交付核心模块，覆盖动态权限、配置化表格表单、WebSocket 实时互动、多语言与 SSO 集成。
         </template>
       </SectionHeader>
 
@@ -46,8 +43,8 @@ const pillars = [
             </template>
 
             <div class="media-caption">
-              <p class="media-caption__title font-display">DX to Agent Skills</p>
-              <p class="media-caption__desc">从远程类型同步，到可安装的 Agent 工作流</p>
+              <p class="media-caption__title font-display">3 Systems · 1 Stack</p>
+              <p class="media-caption__desc">三套业务系统，同一套可复用的前端范式</p>
             </div>
           </CssLiquidGlass>
         </BlurReveal>

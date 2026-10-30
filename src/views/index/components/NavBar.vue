@@ -1,10 +1,9 @@
 <script setup lang="ts">
 /**
  * NavBar —— 顶部悬浮导航。
- * 结构对齐参考站点 SiteHeader：
  * fixed 顶部 → section-pad 竖向内边距 → 药丸形液态玻璃容器（max-w-6xl）
  *   → 品牌（图形标 + Fraunces 字标） / 导航项（hover 药丸底色） / 主题切换
- * 差异：本项目是单页落地页，导航项指向分区锚点，并额外做了当前分区高亮。
+ * 单页落地页，导航项指向分区锚点，并做了当前分区高亮。
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -12,8 +11,8 @@ import { LiquidGlass, ThemeToggle } from '@/components/portfolio'
 
 const links = [
   { id: 'about', label: '关于' },
-  { id: 'open-source', label: '开源' },
-  { id: 'skills', label: 'SKILLS' },
+  { id: 'projects', label: '项目' },
+  { id: 'skills', label: '能力' },
   { id: 'writing', label: '文章' },
   { id: 'trajectory', label: '轨迹' },
 ]
@@ -107,9 +106,9 @@ onUnmounted(() => {
             @click="backToTop"
           >
             <span class="brand-mark" aria-hidden="true">
-              <span class="brand-mark-inner">H</span>
+              <span class="brand-mark-inner">韩</span>
             </span>
-            <span class="brand-name font-display">Karot</span>
+            <span class="brand-name font-display">韩</span>
           </a>
 
           <nav class="nav-links">

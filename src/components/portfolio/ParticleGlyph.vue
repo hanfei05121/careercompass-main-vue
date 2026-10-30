@@ -19,7 +19,7 @@ import { cn } from '@/utils'
 
 const props = withDefaults(
   defineProps<{
-    /** 组成粒子的字形 / 文字（暂以「韩」占位） */
+    /** 组成粒子的字形 / 文字 */
     text?: string
     /** 字形字体 */
     fontFamily?: string
